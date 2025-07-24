@@ -31,6 +31,20 @@ const Index = () => {
   const { user } = useAuth();
   const { bills, isLoading, addBill, updateBill, deleteBill, duplicateBill } = useBills();
 
+  // Convert database Bill to legacy Bill format for components
+  const convertToLegacyBill = (dbBill: DBBill): LegacyBill => ({
+    id: dbBill.id,
+    name: dbBill.name,
+    amount: dbBill.amount,
+    dueDate: dbBill.due_date,
+    category: dbBill.category,
+    isPaid: dbBill.is_paid,
+    isArchived: dbBill.is_archived,
+    createdAt: dbBill.created_at
+  });
+
+  const legacyBills = bills.map(convertToLegacyBill);
+
   // Show authentication message if user is not logged in
   if (!user) {
     return (
@@ -241,10 +255,10 @@ const Index = () => {
           </div>
 
           {/* Notifications */}
-          <NotificationBanner bills={bills} />
+          <NotificationBanner bills={legacyBills} />
 
           {/* Stats */}
-          <BillStats bills={bills} />
+          <BillStats bills={legacyBills} />
 
           {/* Controls */}
           <div className="flex items-center justify-between">
@@ -302,7 +316,7 @@ const Index = () => {
           {showAddForm && (
             <AddBillForm
               onAddBill={handleAddBill}
-              editingBill={editingBill}
+              editingBill={editingBill ? convertToLegacyBill(editingBill) : null}
               onCancelEdit={() => {
                 setEditingBill(null);
                 setShowAddForm(false);
