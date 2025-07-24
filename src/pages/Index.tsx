@@ -14,6 +14,8 @@ import { BillDuplicationDialog } from '@/components/BillDuplicationDialog';
 import { Navigation } from '@/components/Navigation';
 import { NotificationBanner } from '@/components/NotificationBanner';
 import { BillStatus, BILL_CATEGORIES, Bill as LegacyBill } from '@/types/bill';
+import { BillTemplate } from '@/types/billTemplate';
+import { BillTemplatesTab } from '@/components/BillTemplatesTab';
 import { useBills, Bill as DBBill } from '@/hooks/useBills';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -84,6 +86,12 @@ const Index = () => {
     } catch (error) {
       // Error is handled in the useBills hook
     }
+  };
+
+  const handleCreateBillFromTemplate = (template: BillTemplate) => {
+    // Pre-fill form with template data and show add form
+    setShowAddForm(true);
+    // You could also pre-populate a form here if needed
   };
 
   const handleUpdateBill = async (updatedBill: DBBill) => {
@@ -332,6 +340,7 @@ const Index = () => {
             <TabsList>
               <TabsTrigger value="unpaid">Unpaid Bills ({unpaidBills.length})</TabsTrigger>
               <TabsTrigger value="paid">Paid Bills ({paidBills.length})</TabsTrigger>
+              <TabsTrigger value="templates">Bill Templates</TabsTrigger>
             </TabsList>
 
             <TabsContent value="unpaid">
@@ -516,6 +525,10 @@ const Index = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="templates">
+              <BillTemplatesTab onCreateBillFromTemplate={handleCreateBillFromTemplate} />
             </TabsContent>
           </Tabs>
 
