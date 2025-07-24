@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { AuthContainer } from "./components/AuthContainer";
 import Index from "./pages/Index";
 import UserManagement from "./pages/UserManagement";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,15 +26,18 @@ const ProtectedApp = () => {
     );
   }
 
-  if (!user) {
-    return <AuthContainer />;
-  }
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/users" element={<UserManagement />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        {user ? (
+          <>
+            <Route path="/" element={<Index />} />
+            <Route path="/users" element={<UserManagement />} />
+          </>
+        ) : (
+          <Route path="/" element={<AuthContainer />} />
+        )}
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
