@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { LogIn } from 'lucide-react';
+import { ResetPasswordDialog } from './ResetPasswordDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 export const LoginForm = () => {
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -90,7 +92,21 @@ export const LoginForm = () => {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
+          <div className="mt-4 text-center">
+            <Button
+              variant="link"
+              className="p-0 h-auto text-primary text-sm"
+              onClick={() => setShowResetDialog(true)}
+            >
+              Forgot your password?
+            </Button>
+          </div>
         </CardContent>
+        
+        <ResetPasswordDialog
+          open={showResetDialog}
+          onOpenChange={setShowResetDialog}
+        />
       </Card>
     </div>
   );
