@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Receipt, Plus } from 'lucide-react';
+import { Receipt, Plus, Edit, Trash2, Copy, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { BillCard } from '@/components/BillCard';
 import { AddBillForm } from '@/components/AddBillForm';
 import { BillStats } from '@/components/BillStats';
 import { NotificationBanner } from '@/components/NotificationBanner';
+import { BillDuplicationDialog } from '@/components/BillDuplicationDialog';
 import { Navigation } from '@/components/Navigation';
 import { Bill } from '@/types/bill';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,6 +21,7 @@ const Index = () => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
+  const [duplicatingBill, setDuplicatingBill] = useState<Bill | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const { user } = useAuth();
@@ -122,13 +127,18 @@ const Index = () => {
     }
   };
 
-  const duplicateBill = (billData: Omit<Bill, 'id' | 'createdAt'>) => {
+  const openDuplicationDialog = (bill: Bill) => {
+    setDuplicatingBill(bill);
+  };
+
+  const handleDuplicate = (billData: Omit<Bill, 'id' | 'createdAt'>) => {
     const newBill: Bill = {
       ...billData,
       id: Date.now().toString(),
       createdAt: new Date().toISOString()
     };
     setBills(prev => [...prev, newBill]);
+    setDuplicatingBill(null);
     toast({
       title: "Bill duplicated",
       description: `${billData.name} has been created for next month.`,
@@ -151,20 +161,61 @@ const Index = () => {
     return categoryMatch && statusMatch;
   });
 
-  // Sort bills by due date (overdue first, then by date)
-  const sortedBills = [...filteredBills].sort((a, b) => {
-    const aDate = new Date(a.dueDate);
-    const bDate = new Date(b.dueDate);
-    const today = new Date();
-    
-    const aOverdue = !a.isPaid && aDate < today;
-    const bOverdue = !b.isPaid && bDate < today;
-    
-    if (aOverdue && !bOverdue) return -1;
-    if (!aOverdue && bOverdue) return 1;
-    
-    return aDate.getTime() - bDate.getTime();
+  // Group bills by category and payment status
+  const groupedBills = filteredBills.reduce((acc, bill) => {
+    if (!acc[bill.category]) {
+      acc[bill.category] = { paid: [], unpaid: [] };
+    }
+    if (bill.isPaid) {
+      acc[bill.category].paid.push(bill);
+    } else {
+      acc[bill.category].unpaid.push(bill);
+    }
+    return acc;
+  }, {} as Record<string, { paid: Bill[], unpaid: Bill[] }>);
+
+  // Sort bills within each group by due date
+  Object.keys(groupedBills).forEach(category => {
+    groupedBills[category].paid.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    groupedBills[category].unpaid.sort((a, b) => {
+      const aDate = new Date(a.dueDate);
+      const bDate = new Date(b.dueDate);
+      const today = new Date();
+      
+      const aOverdue = aDate < today;
+      const bOverdue = bDate < today;
+      
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      
+      return aDate.getTime() - bDate.getTime();
+    });
   });
+
+  const getBillStatus = (bill: Bill) => {
+    const today = new Date();
+    const dueDate = new Date(bill.dueDate);
+    const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (bill.isPaid) return 'paid';
+    if (daysDiff < 0) return 'overdue';
+    if (daysDiff <= 3) return 'due-soon';
+    return 'upcoming';
+  };
+
+  const getStatusBadge = (bill: Bill) => {
+    const status = getBillStatus(bill);
+    switch (status) {
+      case 'paid':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Paid</Badge>;
+      case 'overdue':
+        return <Badge variant="destructive">Overdue</Badge>;
+      case 'due-soon':
+        return <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-200">Due Soon</Badge>;
+      default:
+        return <Badge variant="outline">Upcoming</Badge>;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -246,18 +297,156 @@ const Index = () => {
           />
         )}
 
-        {/* Bills Grid */}
-        {sortedBills.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedBills.map((bill) => (
-              <BillCard
-                key={bill.id}
-                bill={bill}
-                onTogglePaid={togglePaid}
-                onEdit={editBill}
-                onDelete={deleteBill}
-                onDuplicate={duplicateBill}
-              />
+        {/* Bills Tables */}
+        {Object.keys(groupedBills).length > 0 ? (
+          <div className="space-y-8">
+            {Object.entries(groupedBills).map(([category, { paid, unpaid }]) => (
+              <div key={category} className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-semibold">{category}</h2>
+                  <Badge variant="outline">
+                    {paid.length + unpaid.length} bill{paid.length + unpaid.length !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
+
+                {/* Unpaid Bills */}
+                {unpaid.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <X className="h-5 w-5 text-red-500" />
+                        Unpaid Bills ({unpaid.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Bill Name</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Due Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {unpaid.map((bill) => (
+                            <TableRow key={bill.id}>
+                              <TableCell className="font-medium">{bill.name}</TableCell>
+                              <TableCell>${bill.amount.toFixed(2)}</TableCell>
+                              <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
+                              <TableCell>{getStatusBadge(bill)}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => togglePaid(bill.id)}
+                                    className="gap-1"
+                                  >
+                                    <Check className="h-3 w-3" />
+                                    Mark Paid
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => editBill(bill)}
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => openDuplicationDialog(bill)}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive"
+                                    onClick={() => deleteBill(bill.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Paid Bills */}
+                {paid.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Check className="h-5 w-5 text-green-500" />
+                        Paid Bills ({paid.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Bill Name</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Due Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paid.map((bill) => (
+                            <TableRow key={bill.id} className="opacity-75">
+                              <TableCell className="font-medium">{bill.name}</TableCell>
+                              <TableCell>${bill.amount.toFixed(2)}</TableCell>
+                              <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
+                              <TableCell>{getStatusBadge(bill)}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => togglePaid(bill.id)}
+                                    className="gap-1"
+                                  >
+                                    <X className="h-3 w-3" />
+                                    Mark Unpaid
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => editBill(bill)}
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => openDuplicationDialog(bill)}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive"
+                                    onClick={() => deleteBill(bill.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             ))}
           </div>
         ) : (
@@ -277,6 +466,16 @@ const Index = () => {
               </Button>
             )}
           </div>
+        )}
+
+        {/* Duplication Dialog */}
+        {duplicatingBill && (
+          <BillDuplicationDialog
+            bill={duplicatingBill}
+            isOpen={!!duplicatingBill}
+            onClose={() => setDuplicatingBill(null)}
+            onDuplicate={handleDuplicate}
+          />
         )}
         </div>
       </div>
