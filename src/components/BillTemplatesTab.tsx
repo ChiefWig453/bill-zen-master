@@ -9,9 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { BillTemplate, TEMPLATE_CATEGORIES } from '@/types/billTemplate';
+import { BillTemplate } from '@/types/billTemplate';
 import { useBillTemplates } from '@/hooks/useBillTemplates';
 import { useToast } from '@/hooks/use-toast';
+import { useCategories } from '@/hooks/useCategories';
 
 interface BillTemplatesTabProps {
   onCreateBillFromTemplate: (template: BillTemplate) => void;
@@ -20,6 +21,7 @@ interface BillTemplatesTabProps {
 export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabProps) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<BillTemplate | null>(null);
+  const [newCategory, setNewCategory] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
@@ -28,6 +30,7 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
   });
   const { templates, addTemplate, updateTemplate, deleteTemplate } = useBillTemplates();
   const { toast } = useToast();
+  const { allCategories, addCustomCategory } = useCategories();
 
   const resetForm = () => {
     setFormData({
@@ -142,13 +145,44 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {TEMPLATE_CATEGORIES.map((category) => (
+                      {allCategories.map((category) => (
                         <SelectItem key={category} value={category}>
                           {category}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  
+                  {/* Add new category */}
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      placeholder="Add new category"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newCategory.trim() && addCustomCategory(newCategory)) {
+                            setFormData(prev => ({ ...prev, category: newCategory.trim() }));
+                            setNewCategory('');
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (newCategory.trim() && addCustomCategory(newCategory)) {
+                          setFormData(prev => ({ ...prev, category: newCategory.trim() }));
+                          setNewCategory('');
+                        }
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
