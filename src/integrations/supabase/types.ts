@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      bill_templates: {
+        Row: {
+          amount: number | null
+          category: string
+          created_at: string
+          due_day: number | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          category: string
+          created_at?: string
+          due_day?: number | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          category?: string
+          created_at?: string
+          due_day?: number | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bills: {
         Row: {
           amount: number
@@ -97,6 +130,10 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      validate_bill_input: {
+        Args: { p_name: string; p_amount: number; p_category: string }
+        Returns: boolean
       }
     }
     Enums: {

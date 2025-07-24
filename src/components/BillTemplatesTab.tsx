@@ -1,16 +1,13 @@
 import { useState } from 'react';
+import { useBillTemplatesSecure, BillTemplate } from '@/hooks/useBillTemplatesSecure';
 import { Plus, Edit, Trash2, FileText, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { BillTemplate } from '@/types/billTemplate';
-import { useBillTemplates } from '@/hooks/useBillTemplates';
 import { useToast } from '@/hooks/use-toast';
 import { useCategories } from '@/hooks/useCategories';
 
@@ -19,72 +16,64 @@ interface BillTemplatesTabProps {
 }
 
 export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabProps) => {
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateAmount, setTemplateAmount] = useState<number | undefined>();
+  const [templateCategory, setTemplateCategory] = useState('');
+  const [templateDueDay, setTemplateDueDay] = useState<number | undefined>();
   const [editingTemplate, setEditingTemplate] = useState<BillTemplate | null>(null);
-  const [newCategory, setNewCategory] = useState('');
-  const [formData, setFormData] = useState({
-    name: '',
-    amount: '',
-    category: '',
-    description: ''
-  });
-  const { templates, addTemplate, updateTemplate, deleteTemplate } = useBillTemplates();
+  
+  const { templates, isLoading, addTemplate, updateTemplate, deleteTemplate } = useBillTemplatesSecure();
   const { toast } = useToast();
-  const { allCategories, addCustomCategory } = useCategories();
+  const { allCategories } = useCategories();
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      amount: '',
-      category: '',
-      description: ''
-    });
+    setTemplateName('');
+    setTemplateAmount(undefined);
+    setTemplateCategory('');
+    setTemplateDueDay(undefined);
     setEditingTemplate(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.category) {
+    if (!templateName?.trim() || !templateCategory?.trim()) {
       toast({
         title: "Validation Error",
-        description: "Name and category are required.",
+        description: "Please fill in all required fields.",
         variant: "destructive",
       });
       return;
     }
 
     const templateData = {
-      name: formData.name,
-      amount: formData.amount ? parseFloat(formData.amount) : undefined,
-      category: formData.category,
-      description: formData.description || undefined
+      name: templateName.trim(),
+      amount: templateAmount || undefined,
+      category: templateCategory.trim(),
+      due_day: templateDueDay || undefined
     };
 
+    let success = false;
     if (editingTemplate) {
-      updateTemplate(editingTemplate.id, templateData);
+      await updateTemplate(editingTemplate.id, templateData);
+      setEditingTemplate(null);
+      success = true;
     } else {
-      addTemplate(templateData);
+      const result = await addTemplate(templateData);
+      success = result !== null;
     }
 
-    resetForm();
-    setShowAddForm(false);
+    if (success) {
+      resetForm();
+    }
   };
 
   const handleEdit = (template: BillTemplate) => {
-    setFormData({
-      name: template.name,
-      amount: template.amount?.toString() || '',
-      category: template.category,
-      description: template.description || ''
-    });
+    setTemplateName(template.name);
+    setTemplateAmount(template.amount);
+    setTemplateCategory(template.category);
+    setTemplateDueDay(template.due_day);
     setEditingTemplate(template);
-    setShowAddForm(true);
-  };
-
-  const handleCancel = () => {
-    resetForm();
-    setShowAddForm(false);
   };
 
   const handleCreateBill = (template: BillTemplate) => {
@@ -97,7 +86,6 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Bill Templates</h2>
@@ -105,141 +93,113 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
             Create reusable bill templates for easy bill management
           </p>
         </div>
-        <Button onClick={() => setShowAddForm(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Template
-        </Button>
       </div>
 
-      {/* Add/Edit Form */}
-      {showAddForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              {editingTemplate ? 'Edit Template' : 'Add New Template'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="templateName">Template Name</Label>
-                  <Input
-                    id="templateName"
-                    placeholder="e.g., Monthly Electric Bill"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="templateCategory">Category</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allCategories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {/* Add new category */}
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      placeholder="Add new category"
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (newCategory.trim() && addCustomCategory(newCategory)) {
-                            setFormData(prev => ({ ...prev, category: newCategory.trim() }));
-                            setNewCategory('');
-                          }
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (newCategory.trim() && addCustomCategory(newCategory)) {
-                          setFormData(prev => ({ ...prev, category: newCategory.trim() }));
-                          setNewCategory('');
-                        }
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="templateAmount">Default Amount (Optional)</Label>
-                  <Input
-                    id="templateAmount"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.amount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="templateDescription">Description (Optional)</Label>
-                <Textarea
-                  id="templateDescription"
-                  placeholder="Add any notes about this bill template..."
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                />
-              </div>
-              
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" className="flex-1">
-                  {editingTemplate ? 'Update Template' : 'Add Template'}
-                </Button>
-                <Button type="button" variant="outline" onClick={handleCancel}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Templates List */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Your Templates ({templates.length})
+            {editingTemplate ? 'Edit Template' : 'Add New Template'}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {templates.length > 0 ? (
+        <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="templateName">Template Name *</Label>
+                <Input
+                  id="templateName"
+                  type="text"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="e.g., Electricity Bill"
+                  maxLength={255}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="templateAmount">Amount</Label>
+                <Input
+                  id="templateAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="999999.99"
+                  value={templateAmount}
+                  onChange={(e) => setTemplateAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="templateCategory">Category *</Label>
+                <Select value={templateCategory} onValueChange={setTemplateCategory} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allCategories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="templateDueDay">Due Day (1-31)</Label>
+                <Input
+                  id="templateDueDay"
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={templateDueDay}
+                  onChange={(e) => setTemplateDueDay(e.target.value ? parseInt(e.target.value) : undefined)}
+                  placeholder="Day of month"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isLoading}>
+                {editingTemplate ? 'Update Template' : 'Add Template'}
+              </Button>
+              {editingTemplate && (
+                <Button type="button" variant="outline" onClick={() => {
+                  setEditingTemplate(null);
+                  resetForm();
+                }}>
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </form>
+
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-sm text-muted-foreground mt-2">Loading templates...</p>
+            </div>
+          ) : templates.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No templates yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Create your first bill template to get started
+              </p>
+            </div>
+          ) : (
             <>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Template Name</TableHead>
                     <TableHead>Category</TableHead>
-                    <TableHead>Default Amount</TableHead>
-                    <TableHead>Description</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Due Day</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -253,8 +213,8 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                       <TableCell>
                         {template.amount ? `$${template.amount.toFixed(2)}` : '—'}
                       </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {template.description || '—'}
+                      <TableCell>
+                        {template.due_day ? `${template.due_day}` : '—'}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -310,19 +270,8 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                 </div>
               </div>
             </>
-          ) : (
-            <div className="text-center py-8">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No templates yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Create your first bill template to get started
-              </p>
-              <Button onClick={() => setShowAddForm(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Your First Template
-              </Button>
-            </div>
           )}
+        </div>
         </CardContent>
       </Card>
     </div>

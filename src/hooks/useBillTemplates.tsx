@@ -19,11 +19,12 @@ export const useBillTemplates = () => {
     localStorage.setItem('billTemplates', JSON.stringify(templates));
   }, [templates]);
 
-  const addTemplate = (templateData: Omit<BillTemplate, 'id' | 'createdAt'>) => {
+  const addTemplate = (templateData: Omit<BillTemplate, 'id' | 'created_at' | 'updated_at'>) => {
     const newTemplate: BillTemplate = {
       ...templateData,
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     
     setTemplates(prev => [...prev, newTemplate]);
