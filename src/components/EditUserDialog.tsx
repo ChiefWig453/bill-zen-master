@@ -24,6 +24,11 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
+  // Early return if user is null
+  if (!user) {
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
