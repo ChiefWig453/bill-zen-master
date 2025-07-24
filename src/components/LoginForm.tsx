@@ -7,11 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-interface LoginFormProps {
-  onSwitchToSignup: () => void;
-}
-
-export const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
+export const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +55,7 @@ export const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
           </div>
           <CardTitle className="text-2xl">Sign In</CardTitle>
           <p className="text-muted-foreground">
-            Access your personal bill tracker
+            Access your bill tracker account
           </p>
         </CardHeader>
         <CardContent>
@@ -94,18 +90,6 @@ export const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          <div className="mt-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
-              <Button
-                variant="link"
-                className="p-0 h-auto text-primary"
-                onClick={onSwitchToSignup}
-              >
-                Sign up here
-              </Button>
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
