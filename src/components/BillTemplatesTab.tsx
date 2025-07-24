@@ -232,82 +232,84 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
         </CardHeader>
         <CardContent>
           {templates.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Template Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Default Amount</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {templates.map((template) => (
-                  <TableRow key={template.id}>
-                    <TableCell className="font-medium">{template.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{template.category}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {template.amount ? `$${template.amount.toFixed(2)}` : '—'}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {template.description || '—'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button 
-                          size="sm" 
-                          variant="default"
-                          onClick={() => handleCreateBill(template)}
-                          className="gap-1"
-                        >
-                          <Calendar className="h-3 w-3" />
-                          Create Bill
-                        </Button>
-                        
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEdit(template)}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          onClick={() => deleteTemplate(template.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Template Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Default Amount</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            
-            {/* Summary Information */}
-            <div className="mt-6 pt-4 border-t border-border">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Templates:</span>
-                  <span className="font-medium">{templates.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Templates with Amount:</span>
-                  <span className="font-medium">{templates.filter(t => t.amount).length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Amount:</span>
-                  <span className="font-medium">
-                    ${templates.reduce((sum, template) => sum + (template.amount || 0), 0).toFixed(2)}
-                  </span>
+                </TableHeader>
+                <TableBody>
+                  {templates.map((template) => (
+                    <TableRow key={template.id}>
+                      <TableCell className="font-medium">{template.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{template.category}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {template.amount ? `$${template.amount.toFixed(2)}` : '—'}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {template.description || '—'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="default"
+                            onClick={() => handleCreateBill(template)}
+                            className="gap-1"
+                          >
+                            <Calendar className="h-3 w-3" />
+                            Create Bill
+                          </Button>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEdit(template)}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => deleteTemplate(template.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {/* Summary Information */}
+              <div className="mt-6 pt-4 border-t border-border">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total Templates:</span>
+                    <span className="font-medium">{templates.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Templates with Amount:</span>
+                    <span className="font-medium">{templates.filter(t => t.amount).length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total Amount:</span>
+                    <span className="font-medium">
+                      ${templates.reduce((sum, template) => sum + (template.amount || 0), 0).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
