@@ -293,15 +293,15 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
               {/* Summary Information */}
               <div className="mt-6 pt-4 border-t border-border">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div className="flex justify-between">
+                  <div className="flex gap-2">
                     <span className="text-muted-foreground">Total Templates:</span>
                     <span className="font-medium">{templates.length}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex gap-2">
                     <span className="text-muted-foreground">Templates with Amount:</span>
                     <span className="font-medium">{templates.filter(t => t.amount).length}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex gap-2">
                     <span className="text-muted-foreground">Total Amount:</span>
                     <span className="font-medium">
                       ${templates.reduce((sum, template) => sum + (template.amount || 0), 0).toFixed(2)}
