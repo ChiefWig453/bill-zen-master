@@ -8,6 +8,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -52,25 +53,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       localStorage.setItem('currentUser', JSON.stringify(userData));
       setIsLoading(false);
       return true;
-    } else if (password === 'demo123') {
-      // Allow new users to register with demo password
-      const newUser = {
-        id: Date.now().toString(),
-        email,
-        password
-      };
-      const userData = { id: newUser.id, email: newUser.email };
-      
-      users.push(newUser);
-      localStorage.setItem('users', JSON.stringify(users));
-      setUser(userData);
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-      setIsLoading(false);
-      return true;
     }
     
     setIsLoading(false);
     return false;
+  };
+
+  const signup = async (email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+    
+    // Check if user already exists
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const existingUser = users.find((u: any) => u.email === email);
+    
+    if (existingUser) {
+      setIsLoading(false);
+      return false;
+    }
+    
+    // Create new user
+    const newUser = {
+      id: Date.now().toString(),
+      email,
+      password
+    };
+    const userData = { id: newUser.id, email: newUser.email };
+    
+    users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(users));
+    setUser(userData);
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+    setIsLoading(false);
+    return true;
   };
 
   const logout = () => {
@@ -79,7 +93,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
-import { LoginForm } from "./components/LoginForm";
+import { AuthContainer } from "./components/AuthContainer";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -25,7 +25,7 @@ const ProtectedApp = () => {
   }
 
   if (!user) {
-    return <LoginForm />;
+    return <AuthContainer />;
   }
 
   return (
