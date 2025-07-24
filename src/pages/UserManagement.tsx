@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, Mail, Shield, Trash2 } from 'lucide-react';
+import { Users, UserPlus, Mail, Shield, Trash2, Search, Edit, Download, Filter } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { InviteUserDialog } from '@/components/InviteUserDialog';
+import { EditUserDialog } from '@/components/EditUserDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -23,7 +27,13 @@ interface Profile {
 
 const UserManagement = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -31,6 +41,30 @@ const UserManagement = () => {
   useEffect(() => {
     fetchProfiles();
   }, []);
+
+  useEffect(() => {
+    filterProfiles();
+  }, [profiles, searchTerm, roleFilter]);
+
+  const filterProfiles = () => {
+    let filtered = profiles;
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(user => 
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.first_name && user.first_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (user.last_name && user.last_name.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    // Filter by role
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => user.role === roleFilter);
+    }
+
+    setFilteredProfiles(filtered);
+  };
 
   const fetchProfiles = async () => {
     try {
@@ -130,6 +164,93 @@ const UserManagement = () => {
     fetchProfiles();
   };
 
+  const handleEditSuccess = () => {
+    setShowEditDialog(false);
+    setEditingUser(null);
+    fetchProfiles();
+  };
+
+  const editUser = (user: Profile) => {
+    setEditingUser(user);
+    setShowEditDialog(true);
+  };
+
+  const exportUsers = () => {
+    const csvContent = [
+      ['Name', 'Email', 'Role', 'Joined'],
+      ...filteredProfiles.map(user => [
+        `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Pending',
+        user.email,
+        user.role,
+        new Date(user.created_at).toLocaleDateString()
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'users.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const bulkDeleteUsers = async () => {
+    if (selectedUsers.length === 0) return;
+
+    // Check if trying to delete own account
+    if (selectedUsers.includes(profile?.id || '')) {
+      toast({
+        title: "Error",
+        description: "You cannot delete your own account.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .in('id', selectedUsers);
+
+      if (error) throw error;
+
+      setProfiles(prev => prev.filter(p => !selectedUsers.includes(p.id)));
+      setSelectedUsers([]);
+
+      toast({
+        title: "Users deleted",
+        description: `${selectedUsers.length} user(s) have been deleted.`
+      });
+    } catch (error) {
+      console.error('Error deleting users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete users.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const toggleSelectUser = (userId: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const selectAllUsers = () => {
+    const selectableUsers = filteredProfiles.filter(user => user.id !== profile?.id);
+    setSelectedUsers(
+      selectedUsers.length === selectableUsers.length 
+        ? [] 
+        : selectableUsers.map(user => user.id)
+    );
+  };
+
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -146,24 +267,67 @@ const UserManagement = () => {
       <Navigation />
       <div className="p-4 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Users className="h-6 w-6 text-primary" />
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">User Management</h1>
+                <p className="text-muted-foreground">
+                  Manage users and their access to the system
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">User Management</h1>
-              <p className="text-muted-foreground">
-                Manage users and their access to the system
-              </p>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                onClick={exportUsers}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+              <Button onClick={() => setShowInviteDialog(true)} className="gap-2">
+                <UserPlus className="h-4 w-4" />
+                Invite User
+              </Button>
             </div>
           </div>
-          <Button onClick={() => setShowInviteDialog(true)} className="gap-2">
-            <UserPlus className="h-4 w-4" />
-            Invite User
-          </Button>
-        </div>
+
+          {/* Search and Filters */}
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+              </SelectContent>
+            </Select>
+            {selectedUsers.length > 0 && (
+              <Button 
+                variant="destructive" 
+                onClick={bulkDeleteUsers}
+                className="gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Selected ({selectedUsers.length})
+              </Button>
+            )}
+          </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -203,73 +367,101 @@ const UserManagement = () => {
         </div>
 
         {/* Users Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Users</CardTitle>
-          </CardHeader>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Users
+                <div className="text-sm font-normal text-muted-foreground">
+                  Showing {filteredProfiles.length} of {profiles.length} users
+                </div>
+              </CardTitle>
+            </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {profiles.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      {user.first_name && user.last_name
-                        ? `${user.first_name} ${user.last_name}`
-                        : user.first_name || 'Pending'
-                      }
-                      {user.id === profile?.id && (
-                        <Badge variant="outline" className="ml-2">You</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={getRoleBadgeVariant(user.role)}>
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {user.role !== 'admin' && user.id !== profile?.id && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateUserRole(user.id, 'admin')}
-                          >
-                            Make Admin
-                          </Button>
-                        )}
-                        {user.role === 'admin' && user.id !== profile?.id && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateUserRole(user.id, 'user')}
-                          >
-                            Remove Admin
-                          </Button>
-                        )}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedUsers.length === filteredProfiles.filter(u => u.id !== profile?.id).length && filteredProfiles.length > 0}
+                        onCheckedChange={selectAllUsers}
+                      />
+                    </TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProfiles.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
                         {user.id !== profile?.id && (
+                          <Checkbox
+                            checked={selectedUsers.includes(user.id)}
+                            onCheckedChange={() => toggleSelectUser(user.id)}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {user.first_name && user.last_name
+                          ? `${user.first_name} ${user.last_name}`
+                          : user.first_name || 'Pending'
+                        }
+                        {user.id === profile?.id && (
+                          <Badge variant="outline" className="ml-2">You</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Badge variant={getRoleBadgeVariant(user.role)}>
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
                           <Button
                             size="sm"
-                            variant="destructive"
-                            onClick={() => deleteUser(user.id)}
+                            variant="outline"
+                            onClick={() => editUser(user)}
+                            className="gap-1"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Edit className="h-3 w-3" />
+                            Edit
                           </Button>
-                        )}
-                      </div>
-                    </TableCell>
+                          {user.role !== 'admin' && user.id !== profile?.id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateUserRole(user.id, 'admin')}
+                            >
+                              Make Admin
+                            </Button>
+                          )}
+                          {user.role === 'admin' && user.id !== profile?.id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateUserRole(user.id, 'user')}
+                            >
+                              Remove Admin
+                            </Button>
+                          )}
+                          {user.id !== profile?.id && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteUser(user.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -278,11 +470,18 @@ const UserManagement = () => {
         </Card>
 
         {/* Invite User Dialog */}
-        <InviteUserDialog
-          open={showInviteDialog}
-          onOpenChange={setShowInviteDialog}
-          onSuccess={handleInviteSuccess}
-        />
+          <InviteUserDialog
+            open={showInviteDialog}
+            onOpenChange={setShowInviteDialog}
+            onSuccess={handleInviteSuccess}
+          />
+
+          <EditUserDialog
+            open={showEditDialog}
+            onOpenChange={setShowEditDialog}
+            user={editingUser}
+            onSuccess={handleEditSuccess}
+          />
         </div>
       </div>
     </div>
