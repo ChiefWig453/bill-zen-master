@@ -370,7 +370,7 @@ const Index = () => {
                               )}
                             </TableCell>
                             <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                            <TableCell>{bill.dueDate}</TableCell>
+                            <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
                             <TableCell>{getStatusBadge(bill)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
@@ -484,7 +484,7 @@ const Index = () => {
                               )}
                             </TableCell>
                             <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                            <TableCell>{bill.dueDate}</TableCell>
+                            <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
                             <TableCell>{getStatusBadge(bill)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
