@@ -321,6 +321,9 @@ const Index = () => {
                 setEditingBill(null);
                 setShowAddForm(false);
               }}
+              onCancelAdd={() => {
+                setShowAddForm(false);
+              }}
             />
           )}
 

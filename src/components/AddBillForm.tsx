@@ -14,9 +14,10 @@ interface AddBillFormProps {
   onAddBill: (bill: Omit<Bill, 'id' | 'createdAt'>) => void;
   editingBill?: Bill | null;
   onCancelEdit?: () => void;
+  onCancelAdd?: () => void;
 }
 
-export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit }: AddBillFormProps) => {
+export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit, onCancelAdd }: AddBillFormProps) => {
   const [formData, setFormData] = useState({
     name: editingBill?.name || '',
     amount: editingBill?.amount?.toString() || '',
@@ -81,6 +82,11 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit }: AddBillFor
     if (editingBill && onCancelEdit) {
       onCancelEdit();
     } else {
+      // When adding a new bill, close the form
+      if (onCancelAdd) {
+        onCancelAdd();
+      }
+      // Also clear the form data
       setFormData({
         name: '',
         amount: '',
