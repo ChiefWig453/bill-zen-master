@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Receipt, Plus, Edit, Trash2, Copy, Check, X } from 'lucide-react';
+import { Receipt, Plus, Edit, Trash2, Copy, Check, X, Archive, ArchiveRestore, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -24,6 +24,7 @@ const Index = () => {
   const [duplicatingBill, setDuplicatingBill] = useState<Bill | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [showArchived, setShowArchived] = useState(false);
   const { user } = useAuth();
   const { allCategories } = useCategories();
   const { toast } = useToast();
@@ -127,6 +128,20 @@ const Index = () => {
     }
   };
 
+  const archiveBill = (id: string) => {
+    const bill = bills.find(b => b.id === id);
+    setBills(prev => prev.map(b => 
+      b.id === id ? { ...b, isArchived: !b.isArchived } : b
+    ));
+    
+    if (bill) {
+      toast({
+        title: bill.isArchived ? "Bill unarchived" : "Bill archived",
+        description: `${bill.name} has been ${bill.isArchived ? 'unarchived' : 'archived'}.`,
+      });
+    }
+  };
+
   const openDuplicationDialog = (bill: Bill) => {
     setDuplicatingBill(bill);
   };
@@ -153,44 +168,53 @@ const Index = () => {
   // Filter bills
   const filteredBills = bills.filter(bill => {
     const categoryMatch = filterCategory === 'all' || bill.category === filterCategory;
+    const archivedMatch = showArchived ? bill.isArchived : !bill.isArchived;
     
     let statusMatch = true;
     if (filterStatus === 'paid') statusMatch = bill.isPaid;
     if (filterStatus === 'unpaid') statusMatch = !bill.isPaid;
     
-    return categoryMatch && statusMatch;
+    return categoryMatch && statusMatch && archivedMatch;
   });
 
-  // Group bills by category and payment status
-  const groupedBills = filteredBills.reduce((acc, bill) => {
-    if (!acc[bill.category]) {
-      acc[bill.category] = { paid: [], unpaid: [] };
-    }
-    if (bill.isPaid) {
-      acc[bill.category].paid.push(bill);
-    } else {
-      acc[bill.category].unpaid.push(bill);
-    }
-    return acc;
-  }, {} as Record<string, { paid: Bill[], unpaid: Bill[] }>);
+  // Separate bills into paid and unpaid
+  const unpaidBills = filteredBills.filter(bill => !bill.isPaid);
+  const paidBills = filteredBills.filter(bill => bill.isPaid);
 
-  // Sort bills within each group by due date
-  Object.keys(groupedBills).forEach(category => {
-    groupedBills[category].paid.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-    groupedBills[category].unpaid.sort((a, b) => {
-      const aDate = new Date(a.dueDate);
-      const bDate = new Date(b.dueDate);
-      const today = new Date();
-      
-      const aOverdue = aDate < today;
-      const bOverdue = bDate < today;
-      
-      if (aOverdue && !bOverdue) return -1;
-      if (!aOverdue && bOverdue) return 1;
-      
-      return aDate.getTime() - bDate.getTime();
+  // Group bills by category within each payment status
+  const groupBillsByCategory = (bills: Bill[]) => {
+    const grouped = bills.reduce((acc, bill) => {
+      if (!acc[bill.category]) {
+        acc[bill.category] = [];
+      }
+      acc[bill.category].push(bill);
+      return acc;
+    }, {} as Record<string, Bill[]>);
+
+    // Sort bills within each category by due date
+    Object.keys(grouped).forEach(category => {
+      grouped[category].sort((a, b) => {
+        const aDate = new Date(a.dueDate);
+        const bDate = new Date(b.dueDate);
+        const today = new Date();
+        
+        if (!a.isPaid && !b.isPaid) {
+          const aOverdue = aDate < today;
+          const bOverdue = bDate < today;
+          
+          if (aOverdue && !bOverdue) return -1;
+          if (!aOverdue && bOverdue) return 1;
+        }
+        
+        return aDate.getTime() - bDate.getTime();
+      });
     });
-  });
+
+    return grouped;
+  };
+
+  const unpaidByCategory = groupBillsByCategory(unpaidBills);
+  const paidByCategory = groupBillsByCategory(paidBills);
 
   const getBillStatus = (bill: Bill) => {
     const today = new Date();
@@ -274,6 +298,15 @@ const Index = () => {
                 <SelectItem value="unpaid">Unpaid</SelectItem>
               </SelectContent>
             </Select>
+            
+            <Button
+              variant={showArchived ? "default" : "outline"}
+              onClick={() => setShowArchived(!showArchived)}
+              className="gap-2"
+            >
+              {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showArchived ? 'Hide Archived' : 'Show Archived'}
+            </Button>
           </div>
           
           <Button 
@@ -298,156 +331,180 @@ const Index = () => {
         )}
 
         {/* Bills Tables */}
-        {Object.keys(groupedBills).length > 0 ? (
+        {(unpaidBills.length > 0 || paidBills.length > 0) ? (
           <div className="space-y-8">
-            {Object.entries(groupedBills).map(([category, { paid, unpaid }]) => (
-              <div key={category} className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-semibold">{category}</h2>
-                  <Badge variant="outline">
-                    {paid.length + unpaid.length} bill{paid.length + unpaid.length !== 1 ? 's' : ''}
-                  </Badge>
-                </div>
-
-                {/* Unpaid Bills */}
-                {unpaid.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <X className="h-5 w-5 text-red-500" />
-                        Unpaid Bills ({unpaid.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Bill Name</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Due Date</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Actions</TableHead>
+            
+            {/* Unpaid Bills Table */}
+            {unpaidBills.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <X className="h-6 w-6 text-red-500" />
+                    Unpaid Bills ({unpaidBills.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Bill Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Due Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {Object.entries(unpaidByCategory).map(([category, categoryBills]) => (
+                        categoryBills.map((bill, index) => (
+                          <TableRow key={bill.id}>
+                            <TableCell className="font-medium">{bill.name}</TableCell>
+                            <TableCell>
+                              {index === 0 && (
+                                <Badge variant="outline" className="font-medium">
+                                  {category}
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>${bill.amount.toFixed(2)}</TableCell>
+                            <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell>{getStatusBadge(bill)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => togglePaid(bill.id)}
+                                  className="gap-1"
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => editBill(bill)}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => openDuplicationDialog(bill)}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => archiveBill(bill.id)}
+                                  title={bill.isArchived ? "Unarchive" : "Archive"}
+                                >
+                                  {bill.isArchived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  onClick={() => deleteBill(bill.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {unpaid.map((bill) => (
-                            <TableRow key={bill.id}>
-                              <TableCell className="font-medium">{bill.name}</TableCell>
-                              <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                              <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
-                              <TableCell>{getStatusBadge(bill)}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => togglePaid(bill.id)}
-                                    className="gap-1"
-                                  >
-                                    <Check className="h-3 w-3" />
-                                    Mark Paid
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => editBill(bill)}
-                                  >
-                                    <Edit className="h-3 w-3" />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => openDuplicationDialog(bill)}
-                                  >
-                                    <Copy className="h-3 w-3" />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="destructive"
-                                    onClick={() => deleteBill(bill.id)}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                )}
+                        ))
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
 
-                {/* Paid Bills */}
-                {paid.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Check className="h-5 w-5 text-green-500" />
-                        Paid Bills ({paid.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Bill Name</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Due Date</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Actions</TableHead>
+            {/* Paid Bills Table */}
+            {paidBills.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Check className="h-6 w-6 text-green-500" />
+                    Paid Bills ({paidBills.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Bill Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Due Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {Object.entries(paidByCategory).map(([category, categoryBills]) => (
+                        categoryBills.map((bill, index) => (
+                          <TableRow key={bill.id} className="opacity-75">
+                            <TableCell className="font-medium">{bill.name}</TableCell>
+                            <TableCell>
+                              {index === 0 && (
+                                <Badge variant="outline" className="font-medium">
+                                  {category}
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>${bill.amount.toFixed(2)}</TableCell>
+                            <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell>{getStatusBadge(bill)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => togglePaid(bill.id)}
+                                  className="gap-1"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => editBill(bill)}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => openDuplicationDialog(bill)}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => archiveBill(bill.id)}
+                                  title={bill.isArchived ? "Unarchive" : "Archive"}
+                                >
+                                  {bill.isArchived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  onClick={() => deleteBill(bill.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paid.map((bill) => (
-                            <TableRow key={bill.id} className="opacity-75">
-                              <TableCell className="font-medium">{bill.name}</TableCell>
-                              <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                              <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
-                              <TableCell>{getStatusBadge(bill)}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => togglePaid(bill.id)}
-                                    className="gap-1"
-                                  >
-                                    <X className="h-3 w-3" />
-                                    Mark Unpaid
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => editBill(bill)}
-                                  >
-                                    <Edit className="h-3 w-3" />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => openDuplicationDialog(bill)}
-                                  >
-                                    <Copy className="h-3 w-3" />
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="destructive"
-                                    onClick={() => deleteBill(bill.id)}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            ))}
+                        ))
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
           </div>
         ) : (
           <div className="text-center py-12">

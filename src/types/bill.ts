@@ -5,6 +5,7 @@ export interface Bill {
   dueDate: string;
   category: string;
   isPaid: boolean;
+  isArchived?: boolean;
   createdAt: string;
 }
 
