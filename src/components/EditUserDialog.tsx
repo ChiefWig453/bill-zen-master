@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface EditUserDialogProps {
   open: boolean;
@@ -21,18 +22,51 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
   const [role, setRole] = useState(user?.role || 'user');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Security check: Prevent users from editing their own role
+    if (currentUser?.id === user.id && role !== user.role) {
+      toast({
+        title: "Access Denied",
+        description: "You cannot modify your own role.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate input
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "All fields are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { error } = await supabase
         .from('profiles')
         .update({
-          first_name: firstName,
-          last_name: lastName,
-          email: email,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          email: email.trim(),
           role: role
         })
         .eq('id', user.id);
@@ -103,7 +137,11 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
           
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select 
+              value={role} 
+              onValueChange={setRole}
+              disabled={currentUser?.id === user.id}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -112,6 +150,11 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
+            {currentUser?.id === user.id && (
+              <p className="text-sm text-muted-foreground">
+                You cannot modify your own role for security reasons.
+              </p>
+            )}
           </div>
           
           <DialogFooter>

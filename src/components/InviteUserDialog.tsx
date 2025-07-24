@@ -25,17 +25,36 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate input
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "All fields are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // For now, we'll just create a placeholder approach
-      // In a real app, you'd send an actual email invitation
-      
       // Check if user already exists
       const { data: existingUser } = await supabase
         .from('profiles')
         .select('email')
-        .eq('email', email)
+        .eq('email', email.trim())
         .single();
 
       if (existingUser) {

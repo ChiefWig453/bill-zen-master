@@ -3,226 +3,179 @@ import { format, parseISO } from 'date-fns';
 import { Receipt, Plus, Edit, Trash2, Copy, Check, X, Archive, ArchiveRestore, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { BillCard } from '@/components/BillCard';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AddBillForm } from '@/components/AddBillForm';
+import { BillCard } from '@/components/BillCard';
 import { BillStats } from '@/components/BillStats';
-import { NotificationBanner } from '@/components/NotificationBanner';
 import { BillDuplicationDialog } from '@/components/BillDuplicationDialog';
 import { Navigation } from '@/components/Navigation';
-import { Bill } from '@/types/bill';
+import { NotificationBanner } from '@/components/NotificationBanner';
+import { BillStatus, BILL_CATEGORIES, Bill as LegacyBill } from '@/types/bill';
+import { useBills, Bill as DBBill } from '@/hooks/useBills';
 import { useAuth } from '@/hooks/useAuth';
-import { useCategories } from '@/hooks/useCategories';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
-  const [bills, setBills] = useState<Bill[]>([]);
+  const [editingBill, setEditingBill] = useState<DBBill | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingBill, setEditingBill] = useState<Bill | null>(null);
-  const [duplicatingBill, setDuplicatingBill] = useState<Bill | null>(null);
-  const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('due_date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showArchived, setShowArchived] = useState(false);
-  const { user } = useAuth();
-  const { allCategories } = useCategories();
+  const [duplicatingBill, setDuplicatingBill] = useState<DBBill | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { bills, isLoading, addBill, updateBill, deleteBill, duplicateBill } = useBills();
 
-  // Load bills from localStorage on mount
-  useEffect(() => {
-    if (user) {
-      const savedBills = localStorage.getItem(`bills_${user.id}`);
-      if (savedBills) {
-        setBills(JSON.parse(savedBills));
-      } else {
-        // Add sample bills for demo
-        const sampleBills: Bill[] = [
-          {
-            id: '1',
-            name: 'Electric Bill',
-            amount: 125.50,
-            dueDate: '2024-01-28',
-            category: 'Utilities',
-            isPaid: false,
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            name: 'Netflix Subscription',
-            amount: 15.99,
-            dueDate: '2024-01-25',
-            category: 'Subscription',
-            isPaid: true,
-            createdAt: new Date().toISOString()
-          }
-        ];
-        setBills(sampleBills);
-        localStorage.setItem(`bills_${user.id}`, JSON.stringify(sampleBills));
-      }
-    }
-  }, [user]);
+  // Show authentication message if user is not logged in
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle>Authentication Required</CardTitle>
+              <CardDescription>
+                Please log in to access your bills and start managing your finances securely.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Your bill data is now stored securely in the database and requires authentication to access.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
-  // Save bills to localStorage whenever bills change
-  useEffect(() => {
-    if (user && bills.length > 0) {
-      localStorage.setItem(`bills_${user.id}`, JSON.stringify(bills));
-    }
-  }, [bills, user]);
-
-  const addBill = (billData: Omit<Bill, 'id' | 'createdAt'>) => {
-    const newBill: Bill = {
-      ...billData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
+  const handleAddBill = async (legacyBill: Omit<LegacyBill, 'id' | 'createdAt'>) => {
+    const newBill: Omit<DBBill, 'id' | 'created_at' | 'updated_at' | 'user_id'> = {
+      name: legacyBill.name,
+      amount: legacyBill.amount,
+      due_date: legacyBill.dueDate,
+      category: legacyBill.category,
+      is_paid: legacyBill.isPaid || false,
+      is_archived: legacyBill.isArchived || false,
     };
+    try {
+      await addBill(newBill);
+      setShowAddForm(false);
+    } catch (error) {
+      // Error is handled in the useBills hook
+    }
+  };
 
-    if (editingBill) {
-      setBills(prev => prev.map(bill => 
-        bill.id === editingBill.id ? { ...newBill, id: editingBill.id, createdAt: editingBill.createdAt } : bill
-      ));
+  const handleUpdateBill = async (updatedBill: DBBill) => {
+    try {
+      await updateBill(updatedBill.id, updatedBill);
       setEditingBill(null);
       toast({
-        title: "Bill updated",
-        description: `${billData.name} has been updated successfully.`,
+        title: "Bill updated successfully",
+        description: `${updatedBill.name} has been updated.`,
       });
-    } else {
-      setBills(prev => [...prev, newBill]);
-      toast({
-        title: "Bill added",
-        description: `${billData.name} has been added successfully.`,
-      });
+    } catch (error) {
+      // Error is handled in the useBills hook
     }
-    
-    setShowAddForm(false);
   };
 
-  const togglePaid = (id: string) => {
-    setBills(prev => prev.map(bill => 
-      bill.id === id ? { ...bill, isPaid: !bill.isPaid } : bill
-    ));
-    
-    const bill = bills.find(b => b.id === id);
+  const handleDeleteBill = async (billId: string) => {
+    try {
+      await deleteBill(billId);
+    } catch (error) {
+      // Error is handled in the useBills hook
+    }
+  };
+
+  const handleTogglePaid = async (billId: string) => {
+    const bill = bills.find(b => b.id === billId);
     if (bill) {
-      toast({
-        title: bill.isPaid ? "Bill marked as unpaid" : "Bill marked as paid",
-        description: `${bill.name} status updated.`,
-      });
+      try {
+        await updateBill(billId, { is_paid: !bill.is_paid });
+      } catch (error) {
+        // Error is handled in the useBills hook
+      }
     }
   };
 
-  const editBill = (bill: Bill) => {
-    setEditingBill(bill);
-    setShowAddForm(true);
-  };
-
-  const deleteBill = (id: string) => {
-    const bill = bills.find(b => b.id === id);
-    setBills(prev => prev.filter(bill => bill.id !== id));
-    
+  const handleArchiveBill = async (billId: string) => {
+    const bill = bills.find(b => b.id === billId);
     if (bill) {
-      toast({
-        title: "Bill deleted",
-        description: `${bill.name} has been deleted.`,
-      });
+      try {
+        await updateBill(billId, { is_archived: !bill.is_archived });
+      } catch (error) {
+        // Error is handled in the useBills hook
+      }
     }
   };
 
-  const archiveBill = (id: string) => {
-    const bill = bills.find(b => b.id === id);
-    setBills(prev => prev.map(b => 
-      b.id === id ? { ...b, isArchived: !b.isArchived } : b
-    ));
-    
-    if (bill) {
-      toast({
-        title: bill.isArchived ? "Bill unarchived" : "Bill archived",
-        description: `${bill.name} has been ${bill.isArchived ? 'unarchived' : 'archived'}.`,
-      });
+  const handleDuplicateBill = async (originalBill: DBBill) => {
+    try {
+      await duplicateBill(originalBill.id);
+      setDuplicatingBill(null);
+    } catch (error) {
+      // Error is handled in the useBills hook
     }
   };
 
-  const openDuplicationDialog = (bill: Bill) => {
-    setDuplicatingBill(bill);
-  };
-
-  const handleDuplicate = (billData: Omit<Bill, 'id' | 'createdAt'>) => {
-    const newBill: Bill = {
-      ...billData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    setBills(prev => [...prev, newBill]);
-    setDuplicatingBill(null);
-    toast({
-      title: "Bill duplicated",
-      description: `${billData.name} has been created for next month.`,
-    });
-  };
-
-  const cancelEdit = () => {
-    setEditingBill(null);
-    setShowAddForm(false);
-  };
-
-  // Filter bills
   const filteredBills = bills.filter(bill => {
-    const categoryMatch = filterCategory === 'all' || bill.category === filterCategory;
-    const archivedMatch = showArchived ? bill.isArchived : !bill.isArchived;
-    
-    let statusMatch = true;
-    if (filterStatus === 'paid') statusMatch = bill.isPaid;
-    if (filterStatus === 'unpaid') statusMatch = !bill.isPaid;
-    
-    return categoryMatch && statusMatch && archivedMatch;
+    if (!showArchived && bill.is_archived) return false;
+    if (showArchived && !bill.is_archived) return false;
+    if (categoryFilter !== 'all' && bill.category !== categoryFilter) return false;
+    if (statusFilter !== 'all' && getStatus(bill) !== statusFilter) return false;
+    return true;
   });
 
-  // Separate bills into paid and unpaid
-  const unpaidBills = filteredBills.filter(bill => !bill.isPaid);
-  const paidBills = filteredBills.filter(bill => bill.isPaid);
+  const sortedBills = [...filteredBills].sort((a, b) => {
+    let aValue: any, bValue: any;
+    
+    switch (sortBy) {
+      case 'name':
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+        break;
+      case 'amount':
+        aValue = a.amount;
+        bValue = b.amount;
+        break;
+      case 'due_date':
+        aValue = new Date(a.due_date);
+        bValue = new Date(b.due_date);
+        break;
+      case 'category':
+        aValue = a.category.toLowerCase();
+        bValue = b.category.toLowerCase();
+        break;
+      case 'status':
+        aValue = getStatus(a);
+        bValue = getStatus(b);
+        break;
+      default:
+        aValue = new Date(a.due_date);
+        bValue = new Date(b.due_date);
+    }
+    
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
 
-  // Group bills by category within each payment status
-  const groupBillsByCategory = (bills: Bill[]) => {
-    const grouped = bills.reduce((acc, bill) => {
-      if (!acc[bill.category]) {
-        acc[bill.category] = [];
-      }
-      acc[bill.category].push(bill);
-      return acc;
-    }, {} as Record<string, Bill[]>);
+  const paidBills = sortedBills.filter(bill => bill.is_paid);
+  const unpaidBills = sortedBills.filter(bill => !bill.is_paid);
 
-    // Sort bills within each category by due date
-    Object.keys(grouped).forEach(category => {
-      grouped[category].sort((a, b) => {
-        const aDate = new Date(a.dueDate);
-        const bDate = new Date(b.dueDate);
-        const today = new Date();
-        
-        if (!a.isPaid && !b.isPaid) {
-          const aOverdue = aDate < today;
-          const bOverdue = bDate < today;
-          
-          if (aOverdue && !bOverdue) return -1;
-          if (!aOverdue && bOverdue) return 1;
-        }
-        
-        return aDate.getTime() - bDate.getTime();
-      });
-    });
-
-    return grouped;
-  };
-
-  const unpaidByCategory = groupBillsByCategory(unpaidBills);
-  const paidByCategory = groupBillsByCategory(paidBills);
-
-  const getBillStatus = (bill: Bill) => {
+  const getStatus = (bill: DBBill): BillStatus => {
+    if (bill.is_paid) return 'paid' as BillStatus;
+    
     const today = new Date();
-    const dueDate = new Date(bill.dueDate);
+    const dueDate = new Date(bill.due_date);
     const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (bill.isPaid) return 'paid';
+    
     if (daysDiff < 0) return 'overdue';
     if (daysDiff <= 3) return 'due-soon';
     return 'upcoming';
@@ -235,8 +188,8 @@ const Index = () => {
     return format(date, 'MMM dd, yyyy');
   };
 
-  const getStatusBadge = (bill: Bill) => {
-    const status = getBillStatus(bill);
+  const getStatusBadge = (bill: DBBill) => {
+    const status = getStatus(bill);
     switch (status) {
       case 'paid':
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Paid</Badge>;
@@ -249,12 +202,25 @@ const Index = () => {
     }
   };
 
-  return (
-    <TooltipProvider>
+  // Show loading state
+  if (isLoading) {
+    return (
       <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <p>Loading your bills...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="container mx-auto px-4 py-8">
+        <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -274,335 +240,288 @@ const Index = () => {
             </div>
           </div>
 
-        {/* Notifications */}
-        <NotificationBanner bills={bills} />
+          {/* Notifications */}
+          <NotificationBanner bills={bills} />
 
-        {/* Stats */}
-        <BillStats bills={bills} />
+          {/* Stats */}
+          <BillStats bills={bills} />
 
-        {/* Add Bill Button & Form */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-4">
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
+          {/* Controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex gap-4">
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {allCategories.map((category) => (
+                  {BILL_CATEGORIES.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
                   ))}
                 </SelectContent>
-            </Select>
+              </Select>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Bills</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                  <SelectItem value="due-soon">Due Soon</SelectItem>
+                  <SelectItem value="upcoming">Upcoming</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button
+                variant={showArchived ? "default" : "outline"}
+                onClick={() => setShowArchived(!showArchived)}
+                className="gap-2"
+              >
+                {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showArchived ? 'Hide Archived' : 'Show Archived'}
+              </Button>
+            </div>
             
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Bills</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="unpaid">Unpaid</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Button
-              variant={showArchived ? "default" : "outline"}
-              onClick={() => setShowArchived(!showArchived)}
+            <Button 
+              onClick={() => {
+                setShowAddForm(!showAddForm);
+                if (editingBill) setEditingBill(null);
+              }}
               className="gap-2"
             >
-              {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showArchived ? 'Hide Archived' : 'Show Archived'}
+              <Plus className="h-4 w-4" />
+              Add Bill
             </Button>
           </div>
-          
-          <Button 
-            onClick={() => {
-              setShowAddForm(!showAddForm);
-              if (editingBill) setEditingBill(null);
-            }}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Add Bill
-          </Button>
-        </div>
 
-        {/* Add/Edit Form */}
-        {showAddForm && (
-          <AddBillForm
-            onAddBill={addBill}
-            editingBill={editingBill}
-            onCancelEdit={cancelEdit}
-          />
-        )}
+          {/* Add/Edit Form */}
+          {showAddForm && (
+            <AddBillForm
+              onAddBill={handleAddBill}
+              editingBill={editingBill}
+              onCancelEdit={() => {
+                setEditingBill(null);
+                setShowAddForm(false);
+              }}
+            />
+          )}
 
-        {/* Bills Tables */}
-        {(unpaidBills.length > 0 || paidBills.length > 0) ? (
-          <div className="space-y-8">
-            
-            {/* Unpaid Bills Table */}
-            {unpaidBills.length > 0 && (
+          {/* Bills Tables */}
+          <Tabs defaultValue="unpaid" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="unpaid">Unpaid Bills ({unpaidBills.length})</TabsTrigger>
+              <TabsTrigger value="paid">Paid Bills ({paidBills.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="unpaid">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <X className="h-6 w-6 text-red-500" />
-                    Unpaid Bills ({unpaidBills.length})
+                  <CardTitle className="flex items-center gap-2">
+                    <X className="h-5 w-5 text-red-500" />
+                    Unpaid Bills
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Bill Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(unpaidByCategory).map(([category, categoryBills]) => (
-                        categoryBills.map((bill, index) => (
+                  {unpaidBills.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Bill Name</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Due Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {unpaidBills.map((bill) => (
                           <TableRow key={bill.id}>
                             <TableCell className="font-medium">{bill.name}</TableCell>
                             <TableCell>
-                              {index === 0 && (
-                                <Badge variant="outline" className="font-medium">
-                                  {category}
-                                </Badge>
-                              )}
+                              <Badge variant="outline">{bill.category}</Badge>
                             </TableCell>
                             <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                            <TableCell>{formatDateSafely(bill.dueDate)}</TableCell>
+                            <TableCell>{formatDateSafely(bill.due_date)}</TableCell>
                             <TableCell>{getStatusBadge(bill)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => togglePaid(bill.id)}
-                                      className="gap-1"
-                                    >
-                                      <Check className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Mark as Paid</TooltipContent>
-                                </Tooltip>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleTogglePaid(bill.id)}
+                                  className="gap-1"
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
                                 
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => editBill(bill)}
-                                    >
-                                      <Edit className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Edit Bill</TooltipContent>
-                                </Tooltip>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingBill(bill);
+                                    setShowAddForm(true);
+                                  }}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
                                 
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => openDuplicationDialog(bill)}
-                                    >
-                                      <Copy className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Duplicate Bill</TooltipContent>
-                                </Tooltip>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => setDuplicatingBill(bill)}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
                                 
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => archiveBill(bill.id)}
-                                    >
-                                      {bill.isArchived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>{bill.isArchived ? "Unarchive Bill" : "Archive Bill"}</TooltipContent>
-                                </Tooltip>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleArchiveBill(bill.id)}
+                                >
+                                  {bill.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
+                                </Button>
                                 
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="destructive"
-                                      onClick={() => deleteBill(bill.id)}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Delete Bill</TooltipContent>
-                                </Tooltip>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  onClick={() => handleDeleteBill(bill.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))
-                      ))}
-                    </TableBody>
-                  </Table>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No unpaid bills found</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            )}
+            </TabsContent>
 
-            {/* Paid Bills Table */}
-            {paidBills.length > 0 && (
+            <TabsContent value="paid">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <Check className="h-6 w-6 text-green-500" />
-                    Paid Bills ({paidBills.length})
+                  <CardTitle className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-green-500" />
+                    Paid Bills
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Bill Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(paidByCategory).map(([category, categoryBills]) => (
-                        categoryBills.map((bill, index) => (
+                  {paidBills.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Bill Name</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Due Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paidBills.map((bill) => (
                           <TableRow key={bill.id} className="opacity-75">
                             <TableCell className="font-medium">{bill.name}</TableCell>
                             <TableCell>
-                              {index === 0 && (
-                                <Badge variant="outline" className="font-medium">
-                                  {category}
-                                </Badge>
-                              )}
+                              <Badge variant="outline">{bill.category}</Badge>
                             </TableCell>
                             <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                            <TableCell>{formatDateSafely(bill.dueDate)}</TableCell>
+                            <TableCell>{formatDateSafely(bill.due_date)}</TableCell>
                             <TableCell>{getStatusBadge(bill)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => togglePaid(bill.id)}
-                                      className="gap-1"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Mark as Unpaid</TooltipContent>
-                                </Tooltip>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleTogglePaid(bill.id)}
+                                  className="gap-1"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
                                 
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => editBill(bill)}
-                                    >
-                                      <Edit className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Edit Bill</TooltipContent>
-                                </Tooltip>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingBill(bill);
+                                    setShowAddForm(true);
+                                  }}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
                                 
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => openDuplicationDialog(bill)}
-                                    >
-                                      <Copy className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Duplicate Bill</TooltipContent>
-                                </Tooltip>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => setDuplicatingBill(bill)}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
                                 
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => archiveBill(bill.id)}
-                                    >
-                                      {bill.isArchived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>{bill.isArchived ? "Unarchive Bill" : "Archive Bill"}</TooltipContent>
-                                </Tooltip>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleArchiveBill(bill.id)}
+                                >
+                                  {bill.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
+                                </Button>
                                 
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      variant="destructive"
-                                      onClick={() => deleteBill(bill.id)}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Delete Bill</TooltipContent>
-                                </Tooltip>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  onClick={() => handleDeleteBill(bill.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))
-                      ))}
-                    </TableBody>
-                  </Table>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No paid bills found</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No bills found</h3>
-            <p className="text-muted-foreground mb-4">
-              {bills.length === 0 
-                ? "Get started by adding your first bill"
-                : "No bills match your current filters"
-              }
-            </p>
-            {bills.length === 0 && (
-              <Button onClick={() => setShowAddForm(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Your First Bill
-              </Button>
-            )}
-          </div>
-        )}
+            </TabsContent>
+          </Tabs>
 
-        {/* Duplication Dialog */}
-        {duplicatingBill && (
-          <BillDuplicationDialog
-            bill={duplicatingBill}
-            isOpen={!!duplicatingBill}
-            onClose={() => setDuplicatingBill(null)}
-            onDuplicate={handleDuplicate}
-          />
-        )}
+          {/* Duplication Dialog */}
+          {duplicatingBill && (
+            <BillDuplicationDialog
+              bill={{
+                ...duplicatingBill,
+                dueDate: duplicatingBill.due_date,
+                isPaid: duplicatingBill.is_paid,
+                isArchived: duplicatingBill.is_archived,
+                createdAt: duplicatingBill.created_at
+              }}
+              isOpen={!!duplicatingBill}
+              onClose={() => setDuplicatingBill(null)}
+              onDuplicate={(billData) => {
+                handleDuplicateBill(duplicatingBill);
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
-    </TooltipProvider>
   );
 };
 
