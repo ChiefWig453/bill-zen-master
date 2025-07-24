@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Receipt, Plus, Edit, Trash2, Copy, Check, X, Archive, ArchiveRestore, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -228,6 +228,13 @@ const Index = () => {
     return 'upcoming';
   };
 
+  const formatDateSafely = (dateString: string) => {
+    // Parse the date string safely to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+    return format(date, 'MMM dd, yyyy');
+  };
+
   const getStatusBadge = (bill: Bill) => {
     const status = getBillStatus(bill);
     switch (status) {
@@ -370,7 +377,7 @@ const Index = () => {
                               )}
                             </TableCell>
                             <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                            <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell>{formatDateSafely(bill.dueDate)}</TableCell>
                             <TableCell>{getStatusBadge(bill)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
@@ -484,7 +491,7 @@ const Index = () => {
                               )}
                             </TableCell>
                             <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                            <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell>{formatDateSafely(bill.dueDate)}</TableCell>
                             <TableCell>{getStatusBadge(bill)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
