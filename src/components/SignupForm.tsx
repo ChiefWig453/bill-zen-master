@@ -15,6 +15,8 @@ export const SignupForm = ({ onSwitchToLogin }: SignupFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
   const { toast } = useToast();
@@ -50,17 +52,17 @@ export const SignupForm = ({ onSwitchToLogin }: SignupFormProps) => {
     }
 
     setIsLoading(true);
-    const success = await signup(email, password);
+    const { success, error } = await signup(email, password, firstName, lastName);
     
     if (success) {
       toast({
-        title: "Welcome!",
-        description: "Your account has been created successfully."
+        title: "Account Created!",
+        description: "Please check your email to confirm your account."
       });
     } else {
       toast({
         title: "Signup failed",
-        description: "This email is already registered. Please try logging in instead.",
+        description: error || "Failed to create account. Please try again.",
         variant: "destructive"
       });
     }
@@ -83,6 +85,28 @@ export const SignupForm = ({ onSwitchToLogin }: SignupFormProps) => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

@@ -31,7 +31,7 @@ export const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
     }
 
     setIsLoading(true);
-    const success = await login(email, password);
+    const { success, error } = await login(email, password);
     
     if (success) {
       toast({
@@ -41,7 +41,7 @@ export const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
     } else {
       toast({
         title: "Login failed",
-        description: "Invalid credentials. Please check your email and password.",
+        description: error || "Invalid credentials. Please check your email and password.",
         variant: "destructive"
       });
     }
