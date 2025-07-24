@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BILL_CATEGORIES, Bill } from '@/types/bill';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Bill } from '@/types/bill';
+import { useCategories } from '@/hooks/useCategories';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddBillFormProps {
   onAddBill: (bill: Omit<Bill, 'id' | 'createdAt'>) => void;
@@ -21,6 +24,10 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit }: AddBillFor
     category: editingBill?.category || '',
     isPaid: editingBill?.isPaid || false
   });
+  const [newCategory, setNewCategory] = useState('');
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const { allCategories, addCustomCategory } = useCategories();
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +52,28 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit }: AddBillFor
         category: '',
         isPaid: false
       });
+    }
+  };
+
+  const handleAddCustomCategory = () => {
+    const trimmedCategory = newCategory.trim();
+    if (trimmedCategory) {
+      const success = addCustomCategory(trimmedCategory);
+      if (success) {
+        setFormData(prev => ({ ...prev, category: trimmedCategory }));
+        setNewCategory('');
+        setShowAddCategory(false);
+        toast({
+          title: "Category added",
+          description: `"${trimmedCategory}" has been added to your categories.`
+        });
+      } else {
+        toast({
+          title: "Category exists",
+          description: "This category already exists.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -109,7 +138,41 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit }: AddBillFor
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="category">Category</Label>
+                <Dialog open={showAddCategory} onOpenChange={setShowAddCategory}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-auto p-1">
+                      <PlusCircle className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Add Custom Category</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="newCategory">Category Name</Label>
+                        <Input
+                          id="newCategory"
+                          value={newCategory}
+                          onChange={(e) => setNewCategory(e.target.value)}
+                          placeholder="Enter category name"
+                          onKeyPress={(e) => e.key === 'Enter' && handleAddCustomCategory()}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setShowAddCategory(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleAddCustomCategory}>
+                          Add Category
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
               <Select
                 value={formData.category}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
@@ -119,7 +182,7 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit }: AddBillFor
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {BILL_CATEGORIES.map((category) => (
+                  {allCategories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>

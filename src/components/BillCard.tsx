@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { format, isAfter, isBefore, addDays } from 'date-fns';
 import { Calendar, DollarSign, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Bill, BillStatus } from '@/types/bill';
+import { BillDuplicationDialog } from '@/components/BillDuplicationDialog';
 import { cn } from '@/lib/utils';
 
 interface BillCardProps {
@@ -11,6 +13,7 @@ interface BillCardProps {
   onTogglePaid: (id: string) => void;
   onEdit: (bill: Bill) => void;
   onDelete: (id: string) => void;
+  onDuplicate: (bill: Omit<Bill, 'id' | 'createdAt'>) => void;
 }
 
 const getBillStatus = (bill: Bill): BillStatus => {
@@ -58,10 +61,19 @@ const getStatusConfig = (status: BillStatus) => {
   }
 };
 
-export const BillCard = ({ bill, onTogglePaid, onEdit, onDelete }: BillCardProps) => {
+export const BillCard = ({ bill, onTogglePaid, onEdit, onDelete, onDuplicate }: BillCardProps) => {
+  const [showDuplicationDialog, setShowDuplicationDialog] = useState(false);
   const status = getBillStatus(bill);
   const config = getStatusConfig(status);
   const StatusIcon = config.icon;
+
+  const handleTogglePaid = () => {
+    if (!bill.isPaid) {
+      // Show duplication dialog when marking as paid
+      setShowDuplicationDialog(true);
+    }
+    onTogglePaid(bill.id);
+  };
 
   return (
     <Card className={cn(
@@ -107,7 +119,7 @@ export const BillCard = ({ bill, onTogglePaid, onEdit, onDelete }: BillCardProps
           <Button
             variant={bill.isPaid ? "outline" : "success"}
             size="sm"
-            onClick={() => onTogglePaid(bill.id)}
+            onClick={handleTogglePaid}
             className="flex-1"
           >
             {bill.isPaid ? 'Mark Unpaid' : 'Mark Paid'}
@@ -128,6 +140,13 @@ export const BillCard = ({ bill, onTogglePaid, onEdit, onDelete }: BillCardProps
           </Button>
         </div>
       </CardContent>
+      
+      <BillDuplicationDialog
+        bill={bill}
+        isOpen={showDuplicationDialog}
+        onClose={() => setShowDuplicationDialog(false)}
+        onDuplicate={onDuplicate}
+      />
     </Card>
   );
 };

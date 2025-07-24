@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Receipt, Plus, Filter } from 'lucide-react';
+import { Receipt, Plus, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BillCard } from '@/components/BillCard';
 import { AddBillForm } from '@/components/AddBillForm';
 import { BillStats } from '@/components/BillStats';
 import { NotificationBanner } from '@/components/NotificationBanner';
-import { Bill, BILL_CATEGORIES } from '@/types/bill';
+import { Bill } from '@/types/bill';
+import { useAuth } from '@/hooks/useAuth';
+import { useCategories } from '@/hooks/useCategories';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
@@ -16,44 +18,50 @@ const Index = () => {
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const { user, logout } = useAuth();
+  const { allCategories } = useCategories();
   const { toast } = useToast();
 
   // Load bills from localStorage on mount
   useEffect(() => {
-    const savedBills = localStorage.getItem('bills');
-    if (savedBills) {
-      setBills(JSON.parse(savedBills));
-    } else {
-      // Add sample bills for demo
-      const sampleBills: Bill[] = [
-        {
-          id: '1',
-          name: 'Electric Bill',
-          amount: 125.50,
-          dueDate: '2024-01-28',
-          category: 'Utilities',
-          isPaid: false,
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: '2',
-          name: 'Netflix Subscription',
-          amount: 15.99,
-          dueDate: '2024-01-25',
-          category: 'Subscription',
-          isPaid: true,
-          createdAt: new Date().toISOString()
-        }
-      ];
-      setBills(sampleBills);
-      localStorage.setItem('bills', JSON.stringify(sampleBills));
+    if (user) {
+      const savedBills = localStorage.getItem(`bills_${user.id}`);
+      if (savedBills) {
+        setBills(JSON.parse(savedBills));
+      } else {
+        // Add sample bills for demo
+        const sampleBills: Bill[] = [
+          {
+            id: '1',
+            name: 'Electric Bill',
+            amount: 125.50,
+            dueDate: '2024-01-28',
+            category: 'Utilities',
+            isPaid: false,
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: '2',
+            name: 'Netflix Subscription',
+            amount: 15.99,
+            dueDate: '2024-01-25',
+            category: 'Subscription',
+            isPaid: true,
+            createdAt: new Date().toISOString()
+          }
+        ];
+        setBills(sampleBills);
+        localStorage.setItem(`bills_${user.id}`, JSON.stringify(sampleBills));
+      }
     }
-  }, []);
+  }, [user]);
 
   // Save bills to localStorage whenever bills change
   useEffect(() => {
-    localStorage.setItem('bills', JSON.stringify(bills));
-  }, [bills]);
+    if (user && bills.length > 0) {
+      localStorage.setItem(`bills_${user.id}`, JSON.stringify(bills));
+    }
+  }, [bills, user]);
 
   const addBill = (billData: Omit<Bill, 'id' | 'createdAt'>) => {
     const newBill: Bill = {
@@ -113,6 +121,19 @@ const Index = () => {
     }
   };
 
+  const duplicateBill = (billData: Omit<Bill, 'id' | 'createdAt'>) => {
+    const newBill: Bill = {
+      ...billData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString()
+    };
+    setBills(prev => [...prev, newBill]);
+    toast({
+      title: "Bill duplicated",
+      description: `${billData.name} has been created for next month.`,
+    });
+  };
+
   const cancelEdit = () => {
     setEditingBill(null);
     setShowAddForm(false);
@@ -160,9 +181,15 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Today</p>
-            <p className="font-medium">{format(new Date(), 'EEEE, MMM dd')}</p>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Today</p>
+              <p className="font-medium">{format(new Date(), 'EEEE, MMM dd')}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={logout} className="gap-2">
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
           </div>
         </div>
 
@@ -179,14 +206,14 @@ const Index = () => {
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {BILL_CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {allCategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
             </Select>
             
             <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -232,6 +259,7 @@ const Index = () => {
                 onTogglePaid={togglePaid}
                 onEdit={editBill}
                 onDelete={deleteBill}
+                onDuplicate={duplicateBill}
               />
             ))}
           </div>
