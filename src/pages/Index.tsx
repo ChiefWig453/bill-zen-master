@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Receipt, Plus, LogOut } from 'lucide-react';
+import { Receipt, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BillCard } from '@/components/BillCard';
 import { AddBillForm } from '@/components/AddBillForm';
 import { BillStats } from '@/components/BillStats';
 import { NotificationBanner } from '@/components/NotificationBanner';
+import { Navigation } from '@/components/Navigation';
 import { Bill } from '@/types/bill';
 import { useAuth } from '@/hooks/useAuth';
 import { useCategories } from '@/hooks/useCategories';
@@ -18,7 +19,7 @@ const Index = () => {
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { allCategories } = useCategories();
   const { toast } = useToast();
 
@@ -166,32 +167,28 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Receipt className="h-6 w-6 text-primary" />
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <div className="p-4 md:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Receipt className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">My Bills</h1>
+                <p className="text-muted-foreground">
+                  Stay on top of your bills and never miss a payment
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">Bill Tracker</h1>
-              <p className="text-muted-foreground">
-                Stay on top of your bills and never miss a payment
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Today</p>
               <p className="font-medium">{format(new Date(), 'EEEE, MMM dd')}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={logout} className="gap-2">
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
           </div>
-        </div>
 
         {/* Notifications */}
         <NotificationBanner bills={bills} />
@@ -281,6 +278,7 @@ const Index = () => {
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
