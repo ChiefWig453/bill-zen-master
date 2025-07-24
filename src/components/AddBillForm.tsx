@@ -196,11 +196,9 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit }: AddBillFor
             <Button type="submit" className="flex-1">
               {editingBill ? 'Update Bill' : 'Add Bill'}
             </Button>
-            {(editingBill || formData.name || formData.amount || formData.dueDate || formData.category) && (
-              <Button type="button" variant="outline" onClick={handleCancel}>
-                Cancel
-              </Button>
-            )}
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
           </div>
         </form>
       </CardContent>
