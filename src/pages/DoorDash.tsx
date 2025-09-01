@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ActiveSessionCard } from '@/components/ActiveSessionCard';
 import { DashSessionsTable } from '@/components/DashSessionsTable';
 import { DashStatsCards } from '@/components/DashStatsCards';
+import { DashAnalytics } from '@/components/DashAnalytics';
 import { AddDashSessionDialog } from '@/components/AddDashSessionDialog';
 import { useDashSessions } from '@/hooks/useDashSessions';
 import { useDashExpenses } from '@/hooks/useDashExpenses';
@@ -67,6 +68,8 @@ const DoorDash = () => {
             ))}
           </div>
         )}
+
+        <DashAnalytics sessions={sessions} expenses={expenses} />
 
         <DashSessionsTable 
           sessions={sessions} 
