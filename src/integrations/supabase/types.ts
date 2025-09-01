@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -86,6 +86,99 @@ export type Database = {
         }
         Relationships: []
       }
+      dash_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          receipt_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          receipt_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          receipt_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dash_sessions: {
+        Row: {
+          base_pay: number
+          created_at: string
+          end_time: string | null
+          gas_cost: number | null
+          id: string
+          miles_driven: number | null
+          notes: string | null
+          promotions: number
+          start_time: string
+          tips_app: number
+          tips_cash: number
+          total_deliveries: number
+          total_earnings: number
+          total_hours: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_pay?: number
+          created_at?: string
+          end_time?: string | null
+          gas_cost?: number | null
+          id?: string
+          miles_driven?: number | null
+          notes?: string | null
+          promotions?: number
+          start_time: string
+          tips_app?: number
+          tips_cash?: number
+          total_deliveries?: number
+          total_earnings?: number
+          total_hours?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_pay?: number
+          created_at?: string
+          end_time?: string | null
+          gas_cost?: number | null
+          id?: string
+          miles_driven?: number | null
+          notes?: string | null
+          promotions?: number
+          start_time?: string
+          tips_app?: number
+          tips_cash?: number
+          total_deliveries?: number
+          total_earnings?: number
+          total_hours?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -132,7 +225,7 @@ export type Database = {
         Returns: string
       }
       validate_bill_input: {
-        Args: { p_name: string; p_amount: number; p_category: string }
+        Args: { p_amount: number; p_category: string; p_name: string }
         Returns: boolean
       }
     }
