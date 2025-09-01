@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { AuthContainer } from "./components/AuthContainer";
 import Index from "./pages/Index";
 import UserManagement from "./pages/UserManagement";
+import DoorDash from "./pages/DoorDash";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
@@ -33,6 +34,7 @@ const ProtectedApp = () => {
         {user ? (
           <>
             <Route path="/" element={<Index />} />
+            <Route path="/doordash" element={<DoorDash />} />
             <Route path="/users" element={<UserManagement />} />
           </>
         ) : (
