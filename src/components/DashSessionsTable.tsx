@@ -51,6 +51,7 @@ export const DashSessionsTable = ({ sessions, onDeleteSession }: DashSessionsTab
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
+                  <TableHead>Time</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Deliveries</TableHead>
                   <TableHead>Earnings</TableHead>
@@ -62,9 +63,19 @@ export const DashSessionsTable = ({ sessions, onDeleteSession }: DashSessionsTab
               <TableBody>
                 {sessions.map((session) => (
                   <TableRow key={session.id}>
-                    <TableCell>
-                      {format(new Date(session.start_time), 'MMM dd, yyyy')}
-                    </TableCell>
+                     <TableCell>
+                       {format(new Date(session.start_time), 'MMM dd, yyyy')}
+                     </TableCell>
+                     <TableCell>
+                       <div className="text-sm">
+                         <div>{format(new Date(session.start_time), 'h:mm a')}</div>
+                         {session.end_time && (
+                           <div className="text-muted-foreground">
+                             to {format(new Date(session.end_time), 'h:mm a')}
+                           </div>
+                         )}
+                       </div>
+                     </TableCell>
                     <TableCell>{formatDuration(session.total_hours)}</TableCell>
                     <TableCell>{session.total_deliveries}</TableCell>
                     <TableCell>{formatCurrency(session.total_earnings)}</TableCell>
