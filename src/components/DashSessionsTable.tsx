@@ -64,7 +64,7 @@ export const DashSessionsTable = ({ sessions, onDeleteSession }: DashSessionsTab
                 {sessions.map((session) => (
                   <TableRow key={session.id}>
                      <TableCell>
-                       {format(new Date(session.start_time), 'MMM dd, yyyy')}
+                       {format(new Date(session.start_time), 'EEE, MMM dd, yyyy')}
                      </TableCell>
                      <TableCell>
                        <div className="text-sm">
