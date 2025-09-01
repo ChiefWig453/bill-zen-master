@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ActiveSessionCard } from '@/components/ActiveSessionCard';
 import { DashSessionsTable } from '@/components/DashSessionsTable';
 import { DashStatsCards } from '@/components/DashStatsCards';
+import { AddDashSessionDialog } from '@/components/AddDashSessionDialog';
 import { useDashSessions } from '@/hooks/useDashSessions';
 import { useDashExpenses } from '@/hooks/useDashExpenses';
 import { Play } from 'lucide-react';
@@ -13,6 +14,7 @@ const DoorDash = () => {
     activeSessions, 
     isLoading, 
     startSession, 
+    createSession,
     endSession, 
     updateSession, 
     deleteSession 
@@ -39,12 +41,15 @@ const DoorDash = () => {
       <main className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">DoorDash Tracker</h1>
-          {activeSessions.length === 0 && (
-            <Button onClick={startSession}>
-              <Play className="h-4 w-4 mr-2" />
-              Start Session
-            </Button>
-          )}
+          <div className="flex gap-2">
+            <AddDashSessionDialog onAddSession={createSession} />
+            {activeSessions.length === 0 && (
+              <Button onClick={startSession}>
+                <Play className="h-4 w-4 mr-2" />
+                Start Session
+              </Button>
+            )}
+          </div>
         </div>
 
         <DashStatsCards sessions={sessions} expenses={expenses} />

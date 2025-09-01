@@ -75,6 +75,37 @@ export const useDashSessions = () => {
     }
   };
 
+  const createSession = async (sessionData: Omit<DashSession, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'total_hours'>) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('dash_sessions')
+        .insert({
+          ...sessionData,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setSessions(prev => [data, ...prev]);
+      
+      toast({
+        title: "Session Added",
+        description: "Your past session has been recorded!"
+      });
+    } catch (error) {
+      console.error('Error creating session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add session",
+        variant: "destructive"
+      });
+    }
+  };
+
   const endSession = async (sessionId: string) => {
     try {
       const { data, error } = await supabase
@@ -166,6 +197,7 @@ export const useDashSessions = () => {
     activeSessions,
     isLoading,
     startSession,
+    createSession,
     endSession,
     updateSession,
     deleteSession,
