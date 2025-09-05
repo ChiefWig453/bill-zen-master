@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Receipt, Plus, Edit, Trash2, Copy, Check, X, Archive, ArchiveRestore, Eye, EyeOff, DollarSign, TrendingUp } from 'lucide-react';
+import { Receipt, Plus, Edit, Trash2, Copy, Check, X, Archive, ArchiveRestore, Eye, EyeOff, DollarSign, TrendingUp, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -605,11 +605,55 @@ const Index = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-
-            <TabsContent value="templates">
-              <BillTemplatesTab onCreateBillFromTemplate={handleCreateBillFromTemplate} />
-            </TabsContent>
           </Tabs>
+        </TabsContent>
+
+        <TabsContent value="income">
+          <div className="space-y-4">
+            {/* Income Filter Controls */}
+            <div className="flex items-center gap-4">
+              <Select value={incomeFilter} onValueChange={setIncomeFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {INCOME_CATEGORIES.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Income Tables */}
+            <div className="space-y-6">
+              <IncomeTable
+                incomes={pendingIncomes}
+                onEdit={handleEditIncome}
+                onDelete={handleDeleteIncome}
+                onToggleReceived={markIncomeReceived}
+                title="Pending Income"
+                icon={<Calendar className="h-5 w-5 text-yellow-500" />}
+              />
+              
+              <IncomeTable
+                incomes={receivedIncomes}
+                onEdit={handleEditIncome}
+                onDelete={handleDeleteIncome}
+                onToggleReceived={markIncomeReceived}
+                title="Received Income"
+                icon={<Check className="h-5 w-5 text-green-500" />}
+              />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <BillTemplatesTab onCreateBillFromTemplate={handleCreateBillFromTemplate} />
+        </TabsContent>
+      </Tabs>
 
           {/* Duplication Dialog */}
           {duplicatingBill && (
