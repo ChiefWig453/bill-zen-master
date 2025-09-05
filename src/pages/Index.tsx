@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import { AddBillForm } from '@/components/AddBillForm';
 import { BillCard } from '@/components/BillCard';
 import { BillStats } from '@/components/BillStats';
@@ -484,209 +485,465 @@ const Index = () => {
                 </TabsList>
 
             <TabsContent value="unpaid">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <X className="h-5 w-5 text-red-500" />
-                    Unpaid Bills
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {unpaidBills.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Bill Name</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>Due Date</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {unpaidBills.map((bill) => (
-                          <TableRow key={bill.id}>
-                            <TableCell className="font-medium">{bill.name}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{bill.category}</Badge>
-                            </TableCell>
-                            <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                            <TableCell>{formatDateSafely(bill.due_date)}</TableCell>
-                            <TableCell>{getStatusBadge(bill)}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => handleTogglePaid(bill.id)}
-                                  className="gap-1"
+              <div className="space-y-4">
+                <Card className="overflow-hidden">
+                  <CardHeader className="bg-red-50/50 dark:bg-red-950/20">
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-md">
+                          <X className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        </div>
+                        <span>Unpaid Bills</span>
+                        <Badge variant="destructive" className="ml-2">
+                          {unpaidBills.length}
+                        </Badge>
+                      </div>
+                      {unpaidBills.length > 0 && (
+                        <div className="text-sm text-muted-foreground">
+                          Total: ${unpaidBills.reduce((sum, bill) => sum + bill.amount, 0).toFixed(2)}
+                        </div>
+                      )}
+                    </CardTitle>
+                    {unpaidBills.length > 0 && (
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          {unpaidBills.filter(b => getStatus(b) === 'overdue').length} overdue
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          {unpaidBills.filter(b => getStatus(b) === 'due-soon').length} due soon
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          {unpaidBills.filter(b => getStatus(b) === 'upcoming').length} upcoming
+                        </span>
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {unpaidBills.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/30">
+                              <TableHead className="font-semibold w-[200px]">Bill</TableHead>
+                              <TableHead className="font-semibold">Category</TableHead>
+                              <TableHead className="font-semibold text-right">Amount</TableHead>
+                              <TableHead className="font-semibold">Due Date</TableHead>
+                              <TableHead className="font-semibold text-center">Status</TableHead>
+                              <TableHead className="font-semibold text-center w-[200px]">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {unpaidBills.map((bill) => {
+                              const status = getStatus(bill);
+                              const isUrgent = status === 'overdue' || status === 'due-soon';
+                              return (
+                                <TableRow 
+                                  key={bill.id} 
+                                  className={`hover:bg-muted/30 animate-fade-in ${isUrgent ? 'border-l-4 border-l-red-400 bg-red-50/30 dark:bg-red-950/10' : ''}`}
                                 >
-                                  <Check className="h-3 w-3" />
-                                </Button>
-                                
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEditingBill(bill);
-                                    setShowAddForm(true);
-                                  }}
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => setDuplicatingBill(bill)}
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                                
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => handleArchiveBill(bill.id)}
-                                >
-                                  {bill.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
-                                </Button>
-                                
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive"
-                                  onClick={() => handleDeleteBill(bill.id)}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">No unpaid bills found</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                                  <TableCell className="py-4">
+                                    <div className="space-y-1">
+                                      <div className="font-medium">{bill.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        Added {format(new Date(bill.created_at), 'MMM dd')}
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="py-4">
+                                    <Badge variant="outline" className="font-normal">
+                                      {bill.category}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="py-4 text-right font-mono">
+                                    <span className="font-semibold text-lg">
+                                      ${bill.amount.toFixed(2)}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="py-4">
+                                    <div className="space-y-1">
+                                      <div className="font-medium">
+                                        {formatDateSafely(bill.due_date)}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {(() => {
+                                          const today = new Date();
+                                          const dueDate = new Date(bill.due_date);
+                                          const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                                          if (daysDiff < 0) return `${Math.abs(daysDiff)} days overdue`;
+                                          if (daysDiff === 0) return 'Due today';
+                                          if (daysDiff === 1) return 'Due tomorrow';
+                                          return `Due in ${daysDiff} days`;
+                                        })()}
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="py-4 text-center">
+                                    {getStatusBadge(bill)}
+                                  </TableCell>
+                                  <TableCell className="py-4">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <Button 
+                                        size="sm" 
+                                        variant="default"
+                                        onClick={() => handleTogglePaid(bill.id)}
+                                        className="gap-1 bg-green-600 hover:bg-green-700 text-xs px-2 py-1 h-7"
+                                        title="Mark as paid"
+                                      >
+                                        <Check className="h-3 w-3" />
+                                        Pay
+                                      </Button>
+                                      
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost"
+                                        onClick={() => {
+                                          setEditingBill(bill);
+                                          setShowAddForm(true);
+                                        }}
+                                        title="Edit bill"
+                                        className="h-7 w-7 p-0"
+                                      >
+                                        <Edit className="h-3 w-3" />
+                                      </Button>
+                                      
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost"
+                                        onClick={() => setDuplicatingBill(bill)}
+                                        title="Duplicate bill"
+                                        className="h-7 w-7 p-0"
+                                      >
+                                        <Copy className="h-3 w-3" />
+                                      </Button>
+                                      
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost"
+                                        onClick={() => {
+                                          if (confirm(`Are you sure you want to ${bill.is_archived ? 'unarchive' : 'archive'} "${bill.name}"?`)) {
+                                            handleArchiveBill(bill.id);
+                                          }
+                                        }}
+                                        title={bill.is_archived ? 'Unarchive bill' : 'Archive bill'}
+                                        className="h-7 w-7 p-0"
+                                      >
+                                        {bill.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
+                                      </Button>
+                                      
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost"
+                                        onClick={() => {
+                                          if (confirm(`Are you sure you want to delete "${bill.name}"? This action cannot be undone.`)) {
+                                            handleDeleteBill(bill.id);
+                                          }
+                                        }}
+                                        title="Delete bill"
+                                        className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-6">
+                          <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="text-center space-y-2 max-w-md">
+                          <h3 className="text-lg font-semibold">All bills are paid!</h3>
+                          <p className="text-muted-foreground">
+                            Great job staying on top of your finances. No unpaid bills found.
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={() => setShowAddForm(true)}
+                          className="gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add New Bill
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
 
             <TabsContent value="paid">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Check className="h-5 w-5 text-green-500" />
-                    Paid Bills
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {paidBills.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Bill Name</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>Due Date</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paidBills.map((bill) => (
-                          <TableRow key={bill.id} className="opacity-75">
-                            <TableCell className="font-medium">{bill.name}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{bill.category}</Badge>
-                            </TableCell>
-                            <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                            <TableCell>{formatDateSafely(bill.due_date)}</TableCell>
-                            <TableCell>{getStatusBadge(bill)}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => handleTogglePaid(bill.id)}
-                                  className="gap-1"
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                                
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => {
-                                    setEditingBill(bill);
-                                    setShowAddForm(true);
-                                  }}
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => setDuplicatingBill(bill)}
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                                
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => handleArchiveBill(bill.id)}
-                                >
-                                  {bill.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
-                                </Button>
-                                
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive"
-                                  onClick={() => handleDeleteBill(bill.id)}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">No paid bills found</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <div className="space-y-4">
+                <Card className="overflow-hidden">
+                  <CardHeader className="bg-green-50/50 dark:bg-green-950/20">
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md">
+                          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <span>Paid Bills</span>
+                        <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                          {paidBills.length}
+                        </Badge>
+                      </div>
+                      {paidBills.length > 0 && (
+                        <div className="text-sm text-muted-foreground">
+                          Total: ${paidBills.reduce((sum, bill) => sum + bill.amount, 0).toFixed(2)}
+                        </div>
+                      )}
+                    </CardTitle>
+                    {paidBills.length > 0 && (
+                      <div className="text-sm text-muted-foreground">
+                        You've successfully managed {paidBills.length} bill{paidBills.length !== 1 ? 's' : ''} this period
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {paidBills.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/30">
+                              <TableHead className="font-semibold w-[200px]">Bill</TableHead>
+                              <TableHead className="font-semibold">Category</TableHead>
+                              <TableHead className="font-semibold text-right">Amount</TableHead>
+                              <TableHead className="font-semibold">Due Date</TableHead>
+                              <TableHead className="font-semibold text-center">Status</TableHead>
+                              <TableHead className="font-semibold text-center w-[200px]">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {paidBills.map((bill) => (
+                              <TableRow 
+                                key={bill.id} 
+                                className="hover:bg-muted/30 animate-fade-in opacity-80 hover:opacity-100 transition-opacity"
+                              >
+                                <TableCell className="py-4">
+                                  <div className="space-y-1">
+                                    <div className="font-medium flex items-center gap-2">
+                                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                      {bill.name}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      Paid • Added {format(new Date(bill.created_at), 'MMM dd')}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4">
+                                  <Badge variant="outline" className="font-normal">
+                                    {bill.category}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="py-4 text-right font-mono">
+                                  <span className="font-semibold text-lg text-green-600 dark:text-green-400">
+                                    ${bill.amount.toFixed(2)}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="py-4">
+                                  <div className="space-y-1">
+                                    <div className="font-medium">
+                                      {formatDateSafely(bill.due_date)}
+                                    </div>
+                                    <div className="text-xs text-green-600 dark:text-green-400">
+                                      ✓ Completed
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4 text-center">
+                                  {getStatusBadge(bill)}
+                                </TableCell>
+                                <TableCell className="py-4">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => handleTogglePaid(bill.id)}
+                                      className="gap-1 text-xs px-2 py-1 h-7"
+                                      title="Mark as unpaid"
+                                    >
+                                      <X className="h-3 w-3" />
+                                      Undo
+                                    </Button>
+                                    
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost"
+                                      onClick={() => {
+                                        setEditingBill(bill);
+                                        setShowAddForm(true);
+                                      }}
+                                      title="Edit bill"
+                                      className="h-7 w-7 p-0"
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                    
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost"
+                                      onClick={() => setDuplicatingBill(bill)}
+                                      title="Duplicate bill"
+                                      className="h-7 w-7 p-0"
+                                    >
+                                      <Copy className="h-3 w-3" />
+                                    </Button>
+                                    
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost"
+                                      onClick={() => {
+                                        if (confirm(`Are you sure you want to ${bill.is_archived ? 'unarchive' : 'archive'} "${bill.name}"?`)) {
+                                          handleArchiveBill(bill.id);
+                                        }
+                                      }}
+                                      title={bill.is_archived ? 'Unarchive bill' : 'Archive bill'}
+                                      className="h-7 w-7 p-0"
+                                    >
+                                      {bill.is_archived ? <ArchiveRestore className="h-3 w-3" /> : <Archive className="h-3 w-3" />}
+                                    </Button>
+                                    
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost"
+                                      onClick={() => {
+                                        if (confirm(`Are you sure you want to delete "${bill.name}"? This action cannot be undone.`)) {
+                                          handleDeleteBill(bill.id);
+                                        }
+                                      }}
+                                      title="Delete bill"
+                                      className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-6">
+                          <Receipt className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="text-center space-y-2 max-w-md">
+                          <h3 className="text-lg font-semibold">No paid bills yet</h3>
+                          <p className="text-muted-foreground">
+                            Once you mark bills as paid, they'll appear here for your records.
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => setShowAddForm(true)}
+                            className="gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Add Bill
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            onClick={() => {/* Switch to unpaid tab */}}
+                            className="gap-2"
+                          >
+                            <Eye className="h-4 w-4" />
+                            View Unpaid
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </TabsContent>
 
         <TabsContent value="income">
-          <div className="space-y-4">
-            {/* Income Filter Controls */}
-            <div className="flex items-center gap-4">
-              <Select value={incomeFilter} onValueChange={setIncomeFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {INCOME_CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="space-y-6">
+            {/* Enhanced Income Header */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                  <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md">
+                    <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  Income Management
+                </h2>
+                <p className="text-muted-foreground">
+                  Track all your income sources for better financial planning and budgeting
+                </p>
+                {incomes.length > 0 && (
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <DollarSign className="h-4 w-4" />
+                      {incomes.length} income source{incomes.length !== 1 ? 's' : ''}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <Check className="h-4 w-4" />
+                      ${receivedIncomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)} received
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <IncomeCalendarIcon className="h-4 w-4" />
+                      ${pendingIncomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)} pending
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Enhanced Income Filter Controls */}
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Filter by Category</Label>
+                    <Select value={incomeFilter} onValueChange={setIncomeFilter}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="All categories" />
+                      </SelectTrigger>
+                      <SelectContent className="z-50 bg-background border shadow-md">
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {INCOME_CATEGORIES.map((category) => (
+                          <SelectItem key={category} value={category} className="cursor-pointer">
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIncomeFilter('all')}
+                    size="sm"
+                    className="text-xs"
+                    disabled={incomeFilter === 'all'}
+                  >
+                    Clear Filters
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setShowAddIncomeForm(!showAddIncomeForm);
+                      if (editingIncome) setEditingIncome(null);
+                    }}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Income
+                  </Button>
+                </div>
+              </div>
+            </Card>
 
             {/* Income Tables */}
             <div className="space-y-6">

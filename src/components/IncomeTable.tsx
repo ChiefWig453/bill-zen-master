@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Edit, Trash2, Check, X, Calendar, Repeat } from 'lucide-react';
+import { Edit, Trash2, Check, X, Calendar, Repeat, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -57,89 +57,180 @@ export const IncomeTable = ({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {icon}
-          {title}
-          <span className="text-sm text-muted-foreground">({incomes.length})</span>
+    <Card className="overflow-hidden">
+      <CardHeader className={`${title.includes('Pending') ? 'bg-yellow-50/50 dark:bg-yellow-950/20' : 'bg-green-50/50 dark:bg-green-950/20'}`}>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {icon}
+            <span>{title}</span>
+            <Badge 
+              variant={title.includes('Pending') ? 'secondary' : 'outline'} 
+              className={`ml-2 ${title.includes('Pending') ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'}`}
+            >
+              {incomes.length}
+            </Badge>
+          </div>
+          {incomes.length > 0 && (
+            <div className="text-sm text-muted-foreground">
+              Total: ${incomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)}
+            </div>
+          )}
         </CardTitle>
+        {incomes.length > 0 && (
+          <div className="text-sm text-muted-foreground">
+            {title.includes('Pending') ? 
+              `Waiting for ${incomes.length} income source${incomes.length !== 1 ? 's' : ''}` : 
+              `Successfully received from ${incomes.length} source${incomes.length !== 1 ? 's' : ''}`
+            }
+          </div>
+        )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {incomes.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Frequency</TableHead>
-                <TableHead>Date Received</TableHead>
-                <TableHead>Next Expected</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {incomes.map((income) => (
-                <TableRow key={income.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {income.name}
-                      {income.is_recurring && (
-                        <Repeat className="h-3 w-3 text-muted-foreground" />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{getCategoryBadge(income.category)}</TableCell>
-                  <TableCell className="font-semibold">${income.amount.toFixed(2)}</TableCell>
-                  <TableCell>{getFrequencyBadge(income.frequency)}</TableCell>
-                  <TableCell>
-                    {income.date_received ? formatDateSafely(income.date_received) : 'Not received'}
-                  </TableCell>
-                  <TableCell>
-                    {income.next_date ? formatDateSafely(income.next_date) : 'N/A'}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(income)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => onToggleReceived(income.id)}
-                        className="gap-1"
-                        title={income.is_received ? 'Mark as pending' : 'Mark as received'}
-                      >
-                        {income.is_received ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
-                      </Button>
-                      
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => onEdit(income)}
-                        title="Edit income"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      
-                      <Button 
-                        size="sm" 
-                        variant="destructive"
-                        onClick={() => onDelete(income.id)}
-                        title="Delete income"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  <TableHead className="font-semibold w-[200px]">Income Source</TableHead>
+                  <TableHead className="font-semibold">Category</TableHead>
+                  <TableHead className="font-semibold text-right">Amount</TableHead>
+                  <TableHead className="font-semibold text-center">Frequency</TableHead>
+                  <TableHead className="font-semibold">Date Info</TableHead>
+                  <TableHead className="font-semibold text-center">Status</TableHead>
+                  <TableHead className="font-semibold text-center w-[150px]">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {incomes.map((income) => (
+                  <TableRow 
+                    key={income.id}
+                    className={`hover:bg-muted/30 animate-fade-in ${!income.is_received ? 'border-l-4 border-l-yellow-400 bg-yellow-50/20 dark:bg-yellow-950/10' : 'opacity-80 hover:opacity-100 transition-opacity'}`}
+                  >
+                    <TableCell className="py-4">
+                      <div className="space-y-1">
+                        <div className="font-medium flex items-center gap-2">
+                          {income.name}
+                          {income.is_recurring && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                              <Repeat className="h-3 w-3 mr-1" />
+                              Recurring
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Added {format(new Date(income.created_at), 'MMM dd, yyyy')}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      {getCategoryBadge(income.category)}
+                    </TableCell>
+                    <TableCell className="py-4 text-right font-mono">
+                      <span className={`font-semibold text-lg ${income.is_received ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                        ${income.amount.toFixed(2)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4 text-center">
+                      {getFrequencyBadge(income.frequency)}
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <div className="space-y-1 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Received: </span>
+                          <span className="font-medium">
+                            {income.date_received ? formatDateSafely(income.date_received) : 'Not received'}
+                          </span>
+                        </div>
+                        {income.next_date && (
+                          <div>
+                            <span className="text-muted-foreground">Next: </span>
+                            <span className="font-medium">
+                              {formatDateSafely(income.next_date)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 text-center">
+                      {getStatusBadge(income)}
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button 
+                          size="sm" 
+                          variant={income.is_received ? "outline" : "default"}
+                          onClick={() => onToggleReceived(income.id)}
+                          className={`gap-1 text-xs px-2 py-1 h-7 ${!income.is_received ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                          title={income.is_received ? 'Mark as pending' : 'Mark as received'}
+                        >
+                          {income.is_received ? (
+                            <>
+                              <X className="h-3 w-3" />
+                              Undo
+                            </>
+                          ) : (
+                            <>
+                              <Check className="h-3 w-3" />
+                              Receive
+                            </>
+                          )}
+                        </Button>
+                        
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => onEdit(income)}
+                          title="Edit income"
+                          className="h-7 w-7 p-0"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete "${income.name}"? This action cannot be undone.`)) {
+                              onDelete(income.id);
+                            }
+                          }}
+                          title="Delete income"
+                          className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         ) : (
-          <div className="text-center py-8">
-            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No income entries found</p>
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <div className={`rounded-full p-6 ${title.includes('Pending') ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'bg-green-100 dark:bg-green-900/30'}`}>
+              <Calendar className={`h-8 w-8 ${title.includes('Pending') ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'}`} />
+            </div>
+            <div className="text-center space-y-2 max-w-md">
+              <h3 className="text-lg font-semibold">
+                {title.includes('Pending') ? 'No pending income' : 'No received income yet'}
+              </h3>
+              <p className="text-muted-foreground">
+                {title.includes('Pending') ? 
+                  'Income you\'re expecting will appear here once added.' : 
+                  'Income you\'ve received will be tracked here for your records.'
+                }
+              </p>
+            </div>
+            {title.includes('Pending') && (
+              <Button 
+                onClick={() => {/* This would trigger add income form */}}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Income Source
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
