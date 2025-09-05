@@ -33,9 +33,52 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit, onCancelAdd 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.amount || !formData.dueDate || !formData.category) {
+    console.log('Form data:', formData);
+    
+    // Validate required fields
+    if (!formData.name?.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Bill name is required.",
+        variant: "destructive"
+      });
       return;
     }
+    
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      toast({
+        title: "Validation Error", 
+        description: "Please enter a valid amount greater than 0.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!formData.dueDate) {
+      toast({
+        title: "Validation Error",
+        description: "Due date is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!formData.category?.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a category.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log('Calling onAddBill with:', {
+      name: formData.name,
+      amount: parseFloat(formData.amount),
+      dueDate: formData.dueDate,
+      category: formData.category,
+      isPaid: formData.isPaid
+    });
 
     onAddBill({
       name: formData.name,
