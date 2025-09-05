@@ -17,9 +17,9 @@ interface BillTemplatesTabProps {
 
 export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabProps) => {
   const [templateName, setTemplateName] = useState('');
-  const [templateAmount, setTemplateAmount] = useState<number | undefined>();
+  const [templateAmount, setTemplateAmount] = useState('');
   const [templateCategory, setTemplateCategory] = useState('');
-  const [templateDueDay, setTemplateDueDay] = useState<number | undefined>();
+  const [templateDueDay, setTemplateDueDay] = useState('');
   const [editingTemplate, setEditingTemplate] = useState<BillTemplate | null>(null);
   
   const { templates, isLoading, addTemplate, updateTemplate, deleteTemplate } = useBillTemplatesSecure();
@@ -28,9 +28,9 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
 
   const resetForm = () => {
     setTemplateName('');
-    setTemplateAmount(undefined);
+    setTemplateAmount('');
     setTemplateCategory('');
-    setTemplateDueDay(undefined);
+    setTemplateDueDay('');
     setEditingTemplate(null);
   };
 
@@ -48,9 +48,9 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
 
     const templateData = {
       name: templateName.trim(),
-      amount: templateAmount || undefined,
+      amount: templateAmount ? parseFloat(templateAmount) : undefined,
       category: templateCategory.trim(),
-      due_day: templateDueDay || undefined
+      due_day: templateDueDay ? parseInt(templateDueDay) : undefined
     };
 
     let success = false;
@@ -70,9 +70,9 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
 
   const handleEdit = (template: BillTemplate) => {
     setTemplateName(template.name);
-    setTemplateAmount(template.amount);
+    setTemplateAmount(template.amount?.toString() || '');
     setTemplateCategory(template.category);
-    setTemplateDueDay(template.due_day);
+    setTemplateDueDay(template.due_day?.toString() || '');
     setEditingTemplate(template);
   };
 
@@ -97,10 +97,15 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={`flex items-center gap-2 ${editingTemplate ? 'text-primary' : ''}`}>
             <FileText className="h-5 w-5" />
-            {editingTemplate ? 'Edit Template' : 'Add New Template'}
+            {editingTemplate ? `Edit Template: ${editingTemplate.name}` : 'Add New Template'}
           </CardTitle>
+          {editingTemplate && (
+            <p className="text-sm text-muted-foreground">
+              Editing template created on {new Date(editingTemplate.created_at).toLocaleDateString()}
+            </p>
+          )}
         </CardHeader>
         <CardContent>
         <div className="space-y-6">
@@ -116,6 +121,8 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                   placeholder="e.g., Electricity Bill"
                   maxLength={255}
                   required
+                  autoFocus={editingTemplate !== null}
+                  className={templateName.trim() === '' && editingTemplate ? 'border-destructive' : ''}
                 />
               </div>
               <div>
@@ -127,7 +134,7 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                   min="0"
                   max="999999.99"
                   value={templateAmount}
-                  onChange={(e) => setTemplateAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
+                  onChange={(e) => setTemplateAmount(e.target.value)}
                   placeholder="0.00"
                 />
               </div>
@@ -157,22 +164,33 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                   min="1"
                   max="31"
                   value={templateDueDay}
-                  onChange={(e) => setTemplateDueDay(e.target.value ? parseInt(e.target.value) : undefined)}
+                  onChange={(e) => setTemplateDueDay(e.target.value)}
                   placeholder="Day of month"
                 />
               </div>
             </div>
             
             <div className="flex gap-2">
-              <Button type="submit" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                disabled={isLoading || !templateName.trim() || !templateCategory.trim()}
+                className={editingTemplate ? 'bg-primary hover:bg-primary/90' : ''}
+              >
                 {editingTemplate ? 'Update Template' : 'Add Template'}
               </Button>
               {editingTemplate && (
-                <Button type="button" variant="outline" onClick={() => {
-                  setEditingTemplate(null);
-                  resetForm();
-                }}>
-                  Cancel
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    resetForm();
+                    toast({
+                      title: "Edit cancelled",
+                      description: "Template editing has been cancelled.",
+                    });
+                  }}
+                >
+                  Cancel Edit
                 </Button>
               )}
             </div>
