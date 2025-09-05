@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Receipt, Plus, Edit, Trash2, Copy, Check, X, Archive, ArchiveRestore, Eye, EyeOff } from 'lucide-react';
+import { Receipt, Plus, Edit, Trash2, Copy, Check, X, Archive, ArchiveRestore, Eye, EyeOff, DollarSign, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,12 @@ import { NotificationBanner } from '@/components/NotificationBanner';
 import { BillStatus, BILL_CATEGORIES, Bill as LegacyBill } from '@/types/bill';
 import { BillTemplate } from '@/types/billTemplate';
 import { BillTemplatesTab } from '@/components/BillTemplatesTab';
+import { AddIncomeForm } from '@/components/AddIncomeForm';
+import { IncomeStats } from '@/components/IncomeStats';
+import { IncomeTable } from '@/components/IncomeTable';
 import { useBills, Bill as DBBill } from '@/hooks/useBills';
+import { useIncomes } from '@/hooks/useIncomes';
+import { Income, INCOME_CATEGORIES } from '@/types/income';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,9 +34,16 @@ const Index = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showArchived, setShowArchived] = useState(false);
   const [duplicatingBill, setDuplicatingBill] = useState<DBBill | null>(null);
+  
+  // Income state
+  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
+  const [showAddIncomeForm, setShowAddIncomeForm] = useState(false);
+  const [incomeFilter, setIncomeFilter] = useState<string>('all');
+  
   const { toast } = useToast();
   const { user } = useAuth();
   const { bills, isLoading, addBill, updateBill, deleteBill, duplicateBill } = useBills();
+  const { incomes, isLoading: isLoadingIncomes, addIncome, updateIncome, deleteIncome, markIncomeReceived } = useIncomes();
 
   // Convert database Bill to legacy Bill format for components
   const convertToLegacyBill = (dbBill: DBBill): LegacyBill => ({
@@ -136,6 +148,38 @@ const Index = () => {
       }
     }
   };
+
+  // Income handlers
+  const handleAddIncome = async (incomeData: Omit<Income, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
+    try {
+      await addIncome(incomeData);
+      setShowAddIncomeForm(false);
+      setEditingIncome(null);
+    } catch (error) {
+      // Error is handled in the hook
+    }
+  };
+
+  const handleEditIncome = (income: Income) => {
+    setEditingIncome(income);
+    setShowAddIncomeForm(true);
+  };
+
+  const handleDeleteIncome = async (id: string) => {
+    try {
+      await deleteIncome(id);
+    } catch (error) {
+      // Error is handled in the hook
+    }
+  };
+
+  const filteredIncomes = incomes.filter(income => {
+    if (incomeFilter !== 'all' && income.category !== incomeFilter) return false;
+    return true;
+  });
+
+  const receivedIncomes = filteredIncomes.filter(income => income.is_received);
+  const pendingIncomes = filteredIncomes.filter(income => !income.is_received);
 
   const handleDuplicateBill = async (originalBill: DBBill) => {
     try {
@@ -266,7 +310,10 @@ const Index = () => {
           <NotificationBanner bills={legacyBills} />
 
           {/* Stats */}
-          <BillStats bills={legacyBills} />
+          <BillStats bills={legacyBills} incomes={incomes} />
+
+          {/* Income Stats */}
+          <IncomeStats incomes={incomes} />
 
           {/* Controls */}
           <div className="flex items-center justify-between">
@@ -308,19 +355,33 @@ const Index = () => {
               </Button>
             </div>
             
-            <Button 
-              onClick={() => {
-                setShowAddForm(!showAddForm);
-                if (editingBill) setEditingBill(null);
-              }}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add Bill
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowAddIncomeForm(!showAddIncomeForm);
+                  if (editingIncome) setEditingIncome(null);
+                }}
+                className="gap-2"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Add Income
+              </Button>
+              
+              <Button 
+                onClick={() => {
+                  setShowAddForm(!showAddForm);
+                  if (editingBill) setEditingBill(null);
+                }}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Bill
+              </Button>
+            </div>
           </div>
 
-          {/* Add/Edit Form */}
+          {/* Add/Edit Forms */}
           {showAddForm && (
             <AddBillForm
               onAddBill={handleAddBill}
@@ -335,13 +396,31 @@ const Index = () => {
             />
           )}
 
-          {/* Bills Tables */}
-          <Tabs defaultValue="unpaid" className="space-y-6">
+          {showAddIncomeForm && (
+            <AddIncomeForm
+              onAddIncome={handleAddIncome}
+              editingIncome={editingIncome}
+              onCancel={() => {
+                setShowAddIncomeForm(false);
+                setEditingIncome(null);
+              }}
+            />
+          )}
+
+          {/* Main Content Tabs */}
+          <Tabs defaultValue="bills" className="space-y-6">
             <TabsList>
-              <TabsTrigger value="unpaid">Unpaid Bills ({unpaidBills.length})</TabsTrigger>
-              <TabsTrigger value="paid">Paid Bills ({paidBills.length})</TabsTrigger>
-              <TabsTrigger value="templates">Bill Templates</TabsTrigger>
+              <TabsTrigger value="bills">Bills</TabsTrigger>
+              <TabsTrigger value="income">Income ({incomes.length})</TabsTrigger>
+              <TabsTrigger value="templates">Templates</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="bills">
+              <Tabs defaultValue="unpaid" className="space-y-4">
+                <TabsList>
+                  <TabsTrigger value="unpaid">Unpaid Bills ({unpaidBills.length})</TabsTrigger>
+                  <TabsTrigger value="paid">Paid Bills ({paidBills.length})</TabsTrigger>
+                </TabsList>
 
             <TabsContent value="unpaid">
               <Card>

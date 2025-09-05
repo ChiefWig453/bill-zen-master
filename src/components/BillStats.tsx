@@ -1,13 +1,15 @@
 import { format, isAfter, isBefore, addDays } from 'date-fns';
-import { DollarSign, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
+import { DollarSign, Calendar, AlertTriangle, CheckCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bill } from '@/types/bill';
+import { Income } from '@/types/income';
 
 interface BillStatsProps {
   bills: Bill[];
+  incomes?: Income[];
 }
 
-export const BillStats = ({ bills }: BillStatsProps) => {
+export const BillStats = ({ bills, incomes = [] }: BillStatsProps) => {
   const today = new Date();
   const threeDaysFromNow = addDays(today, 3);
 
@@ -45,20 +47,53 @@ export const BillStats = ({ bills }: BillStatsProps) => {
     dueSoonCount: 0
   });
 
+  // Calculate income stats
+  const incomeStats = incomes.reduce((acc, income) => {
+    acc.totalIncome += income.amount;
+    
+    if (income.is_received) {
+      acc.receivedIncome += income.amount;
+      acc.receivedCount++;
+    } else {
+      acc.pendingIncome += income.amount;
+      acc.pendingCount++;
+    }
+    
+    return acc;
+  }, {
+    totalIncome: 0,
+    receivedIncome: 0,
+    pendingIncome: 0,
+    receivedCount: 0,
+    pendingCount: 0
+  });
+
+  // Calculate net income (received income - paid bills)
+  const netIncome = incomeStats.receivedIncome - stats.paid;
+
   const statCards = [
     {
       title: 'Total Bills',
       value: `$${stats.total.toFixed(2)}`,
       count: bills.length,
       icon: DollarSign,
-      className: 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200'
+      className: 'bg-gradient-to-br from-red-50 to-red-100 border-red-200'
     },
     {
-      title: 'Paid',
-      value: `$${stats.paid.toFixed(2)}`,
-      count: stats.paidCount,
-      icon: CheckCircle,
-      className: 'bg-gradient-to-br from-success/10 to-success/20 border-success/20'
+      title: 'Total Income',
+      value: `$${incomeStats.receivedIncome.toFixed(2)}`,
+      count: incomeStats.receivedCount,
+      icon: TrendingUp,
+      className: 'bg-gradient-to-br from-green-50 to-green-100 border-green-200'
+    },
+    {
+      title: 'Net Income',
+      value: `${netIncome >= 0 ? '+' : ''}$${netIncome.toFixed(2)}`,
+      count: incomes.length + bills.length,
+      icon: netIncome >= 0 ? TrendingUp : TrendingDown,
+      className: netIncome >= 0 
+        ? 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200'
+        : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200'
     },
     {
       title: 'Due Soon',
@@ -66,13 +101,6 @@ export const BillStats = ({ bills }: BillStatsProps) => {
       count: stats.dueSoonCount,
       icon: Calendar,
       className: 'bg-gradient-to-br from-warning/10 to-warning/20 border-warning/20'
-    },
-    {
-      title: 'Overdue',
-      value: `$${stats.overdue.toFixed(2)}`,
-      count: stats.overdueCount,
-      icon: AlertTriangle,
-      className: 'bg-gradient-to-br from-danger/10 to-danger/20 border-danger/20'
     }
   ];
 
@@ -89,7 +117,10 @@ export const BillStats = ({ bills }: BillStatsProps) => {
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
               <p className="text-xs text-muted-foreground">
-                {stat.count} {stat.count === 1 ? 'bill' : 'bills'}
+                {stat.title === 'Total Bills' ? `${stat.count} ${stat.count === 1 ? 'bill' : 'bills'}` :
+                 stat.title === 'Total Income' ? `${stat.count} ${stat.count === 1 ? 'income' : 'incomes'}` :
+                 stat.title === 'Net Income' ? `${stat.count} ${stat.count === 1 ? 'item' : 'items'}` :
+                 `${stat.count} ${stat.count === 1 ? 'bill' : 'bills'}`}
               </p>
             </CardContent>
           </Card>

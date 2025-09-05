@@ -179,6 +179,51 @@ export type Database = {
         }
         Relationships: []
       }
+      incomes: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date_received: string | null
+          frequency: string
+          id: string
+          is_received: boolean
+          is_recurring: boolean
+          name: string
+          next_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date_received?: string | null
+          frequency: string
+          id?: string
+          is_received?: boolean
+          is_recurring?: boolean
+          name: string
+          next_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date_received?: string | null
+          frequency?: string
+          id?: string
+          is_received?: boolean
+          is_recurring?: boolean
+          name?: string
+          next_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
