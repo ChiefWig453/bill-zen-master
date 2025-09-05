@@ -84,6 +84,8 @@ const Index = () => {
   }
 
   const handleAddBill = async (legacyBill: Omit<LegacyBill, 'id' | 'createdAt'>) => {
+    console.log('handleAddBill called with:', legacyBill);
+    
     const newBill: Omit<DBBill, 'id' | 'created_at' | 'updated_at' | 'user_id'> = {
       name: legacyBill.name,
       amount: legacyBill.amount,
@@ -92,11 +94,25 @@ const Index = () => {
       is_paid: legacyBill.isPaid || false,
       is_archived: legacyBill.isArchived || false,
     };
+    
+    console.log('Converted to DB format:', newBill);
+    
     try {
-      await addBill(newBill);
+      console.log('Calling addBill function...');
+      const result = await addBill(newBill);
+      console.log('addBill result:', result);
       setShowAddForm(false);
+      toast({
+        title: "Success",
+        description: "Bill created successfully!",
+      });
     } catch (error) {
-      // Error is handled in the useBills hook
+      console.error('Error in handleAddBill:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create bill. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
