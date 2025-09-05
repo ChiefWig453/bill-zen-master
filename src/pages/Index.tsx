@@ -116,10 +116,55 @@ const Index = () => {
     }
   };
 
-  const handleCreateBillFromTemplate = (template: BillTemplate) => {
-    // Pre-fill form with template data and show add form
-    setShowAddForm(true);
-    // You could also pre-populate a form here if needed
+  const handleCreateBillFromTemplate = async (template: BillTemplate) => {
+    // Helper to compute due date based on template.due_day
+    const computeDueDate = (due_day?: number | null): string => {
+      const now = new Date();
+      if (!due_day) return now.toISOString().slice(0, 10);
+      let year = now.getFullYear();
+      let month = now.getMonth(); // 0-based
+      const today = new Date(year, month, now.getDate());
+      const daysInThisMonth = new Date(year, month + 1, 0).getDate();
+      const dayThisMonth = Math.min(due_day, daysInThisMonth);
+      let candidate = new Date(year, month, dayThisMonth);
+      if (candidate < today) {
+        // Move to next month
+        month += 1;
+        if (month > 11) { month = 0; year += 1; }
+        const daysInNextMonth = new Date(year, month + 1, 0).getDate();
+        const dayNextMonth = Math.min(due_day, daysInNextMonth);
+        candidate = new Date(year, month, dayNextMonth);
+      }
+      return candidate.toISOString().slice(0, 10);
+    };
+
+    try {
+      if (template.amount == null) {
+        toast({
+          title: "Template missing amount",
+          description: "Please add an amount to this template or use Add Bill to set it.",
+          variant: "destructive",
+        });
+        setShowAddForm(true);
+        return;
+      }
+
+      const newBill: Omit<DBBill, 'id' | 'created_at' | 'updated_at' | 'user_id'> = {
+        name: template.name,
+        amount: template.amount,
+        category: template.category,
+        due_date: computeDueDate(template.due_day ?? undefined),
+        is_paid: false,
+        is_archived: false,
+      };
+
+      console.log('Creating bill from template:', template, '->', newBill);
+      await addBill(newBill);
+      toast({ title: 'Bill created', description: `${template.name} scheduled for ${newBill.due_date}.` });
+    } catch (error) {
+      console.error('Error creating bill from template:', error);
+      toast({ title: 'Error', description: 'Failed to create bill from template.', variant: 'destructive' });
+    }
   };
 
   const handleUpdateBill = async (updatedBill: DBBill) => {

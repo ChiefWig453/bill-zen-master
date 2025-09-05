@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCategories } from '@/hooks/useCategories';
 
 interface BillTemplatesTabProps {
-  onCreateBillFromTemplate: (template: BillTemplate) => void;
+  onCreateBillFromTemplate: (template: BillTemplate) => void | Promise<void>;
 }
 
 export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabProps) => {
@@ -223,6 +223,8 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                             variant="default"
                             onClick={() => handleCreateBill(template)}
                             className="gap-1"
+                            disabled={template.amount == null}
+                            title={template.amount == null ? 'Add an amount to enable quick create' : ''}
                           >
                             <Calendar className="h-3 w-3" />
                             Create Bill
