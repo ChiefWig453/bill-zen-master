@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Receipt, Plus, Edit, Trash2, Copy, Check, X, Archive, ArchiveRestore, Eye, EyeOff, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { Receipt, Plus, Edit, Trash2, Copy, Check, X, Archive, ArchiveRestore, Eye, EyeOff, DollarSign, TrendingUp, CalendarDays as IncomeCalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -635,7 +635,7 @@ const Index = () => {
                 onDelete={handleDeleteIncome}
                 onToggleReceived={markIncomeReceived}
                 title="Pending Income"
-                icon={<Calendar className="h-5 w-5 text-yellow-500" />}
+                icon={<IncomeCalendarIcon className="h-5 w-5 text-yellow-500" />}
               />
               
               <IncomeTable
