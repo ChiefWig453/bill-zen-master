@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Bill } from '@/hooks/useBills';
-import { format, addDays, isBefore } from 'date-fns';
+import { format, addDays, isBefore, parseISO } from 'date-fns';
 import { Check, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -30,10 +30,10 @@ export const UpcomingBillsTable = ({ bills, onEditBill, onBillUpdated }: Upcomin
 
   const upcomingBills = bills
     .filter(bill => {
-      const dueDate = new Date(bill.due_date);
+      const dueDate = parseISO(bill.due_date);
       return !bill.is_archived && dueDate <= next30Days;
     })
-    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+    .sort((a, b) => parseISO(a.due_date).getTime() - parseISO(b.due_date).getTime());
 
   const handleMarkAsPaid = async (billId: string) => {
     setUpdatingBills(prev => new Set(prev).add(billId));
@@ -69,7 +69,7 @@ export const UpcomingBillsTable = ({ bills, onEditBill, onBillUpdated }: Upcomin
   };
 
   const getBillStatus = (bill: Bill) => {
-    const dueDate = new Date(bill.due_date);
+    const dueDate = parseISO(bill.due_date);
     
     if (bill.is_paid) {
       return <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>;
@@ -108,7 +108,7 @@ export const UpcomingBillsTable = ({ bills, onEditBill, onBillUpdated }: Upcomin
                   <TableRow key={bill.id}>
                     <TableCell className="font-medium">{bill.name}</TableCell>
                     <TableCell>${Number(bill.amount).toFixed(2)}</TableCell>
-                    <TableCell>{format(new Date(bill.due_date), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>{format(parseISO(bill.due_date), 'MMM d, yyyy')}</TableCell>
                     <TableCell>{bill.category}</TableCell>
                     <TableCell>{getBillStatus(bill)}</TableCell>
                     <TableCell className="text-right">

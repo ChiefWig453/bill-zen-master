@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Bill } from '@/hooks/useBills';
 import { Income } from '@/types/income';
-import { format, isSameDay, isBefore } from 'date-fns';
+import { format, isSameDay, isBefore, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
@@ -31,12 +31,12 @@ export const BillsCalendar = ({ bills, incomes, onEditBill, onEditIncome }: Bill
   const now = new Date();
 
   const getBillsForDate = (date: Date) => {
-    return bills.filter(bill => isSameDay(new Date(bill.due_date), date));
+    return bills.filter(bill => isSameDay(parseISO(bill.due_date), date));
   };
 
   const getIncomesForDate = (date: Date) => {
     return incomes.filter(income => {
-      const incomeDate = income.date_received ? new Date(income.date_received) : null;
+      const incomeDate = income.date_received ? parseISO(income.date_received) : null;
       return incomeDate && isSameDay(incomeDate, date);
     });
   };
@@ -59,7 +59,7 @@ export const BillsCalendar = ({ bills, incomes, onEditBill, onEditIncome }: Bill
     hasIncome: (date: Date) => getIncomesForDate(date).length > 0,
     overdue: (date: Date) => {
       const dateBills = getBillsForDate(date);
-      return dateBills.some(bill => !bill.is_paid && isBefore(new Date(bill.due_date), now));
+      return dateBills.some(bill => !bill.is_paid && isBefore(parseISO(bill.due_date), now));
     },
   };
 
@@ -126,7 +126,7 @@ export const BillsCalendar = ({ bills, incomes, onEditBill, onEditIncome }: Bill
                           <span className="font-medium">{bill.name}</span>
                           {bill.is_paid ? (
                             <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>
-                          ) : isBefore(new Date(bill.due_date), now) ? (
+                          ) : isBefore(parseISO(bill.due_date), now) ? (
                             <Badge variant="destructive">Overdue</Badge>
                           ) : (
                             <Badge variant="secondary">Unpaid</Badge>
