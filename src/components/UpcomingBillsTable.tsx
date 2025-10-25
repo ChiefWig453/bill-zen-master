@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Bill } from '@/hooks/useBills';
-import { format, addDays, isBefore, parseISO } from 'date-fns';
+import { format, addDays, isBefore, parseISO, startOfDay } from 'date-fns';
 import { Check, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -25,13 +25,13 @@ interface UpcomingBillsTableProps {
 export const UpcomingBillsTable = ({ bills, onEditBill, onBillUpdated }: UpcomingBillsTableProps) => {
   const { toast } = useToast();
   const [updatingBills, setUpdatingBills] = useState<Set<string>>(new Set());
-  const now = new Date();
-  const next30Days = addDays(now, 30);
+  const today = startOfDay(new Date());
+  const next30Days = addDays(today, 30);
 
   const upcomingBills = bills
     .filter(bill => {
       const dueDate = parseISO(bill.due_date);
-      return !bill.is_archived && dueDate <= next30Days;
+      return !bill.is_archived && dueDate >= today && dueDate <= next30Days;
     })
     .sort((a, b) => parseISO(a.due_date).getTime() - parseISO(b.due_date).getTime());
 
@@ -73,7 +73,7 @@ export const UpcomingBillsTable = ({ bills, onEditBill, onBillUpdated }: Upcomin
     
     if (bill.is_paid) {
       return <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>;
-    } else if (isBefore(dueDate, now)) {
+    } else if (isBefore(dueDate, today)) {
       return <Badge variant="destructive">Overdue</Badge>;
     } else {
       return <Badge variant="secondary">Unpaid</Badge>;
