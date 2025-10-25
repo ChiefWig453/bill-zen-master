@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase
+    const prefsChannel = supabase
       .channel('auth-user-preferences-changes')
       .on(
         'postgres_changes',
@@ -101,8 +101,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       )
       .subscribe();
 
+    const profileChannel = supabase
+      .channel('auth-user-profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        () => {
+          fetchUserProfile(user.id);
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(prefsChannel);
+      supabase.removeChannel(profileChannel);
     };
   }, [user]);
 

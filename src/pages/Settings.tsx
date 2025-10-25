@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,16 @@ const Settings = () => {
     },
   });
 
+  // Update form when profile changes
+  useEffect(() => {
+    if (profile) {
+      personalInfoForm.reset({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+      });
+    }
+  }, [profile, personalInfoForm]);
+
   const passwordForm = useForm<PasswordUpdateFormData>({
     resolver: zodResolver(passwordUpdateSchema),
     defaultValues: {
@@ -51,6 +61,13 @@ const Settings = () => {
         .eq('id', user.id);
 
       if (error) throw error;
+
+      // Refetch the profile to update the auth context
+      const { data: updatedProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
       toast({
         title: "Success",
