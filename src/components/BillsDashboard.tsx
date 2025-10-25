@@ -1,4 +1,3 @@
-import { DashboardStats } from './DashboardStats';
 import { BillsCalendar } from './BillsCalendar';
 import { UpcomingBillsTable } from './UpcomingBillsTable';
 import { Bill } from '@/hooks/useBills';
@@ -21,8 +20,6 @@ export const BillsDashboard = ({
 }: BillsDashboardProps) => {
   return (
     <div className="space-y-6">
-      <DashboardStats bills={bills} incomes={incomes} />
-      
       <div className="grid gap-6 lg:grid-cols-2">
         <BillsCalendar 
           bills={bills} 
