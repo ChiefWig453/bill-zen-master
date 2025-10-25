@@ -125,6 +125,45 @@ export const resetPasswordSchema = z.object({
 });
 
 // Type exports for TypeScript
+// Personal info validation (only names)
+export const personalInfoSchema = z.object({
+  first_name: z
+    .string()
+    .trim()
+    .min(1, { message: "First name is required" })
+    .max(100, { message: "First name must be less than 100 characters" })
+    .regex(/^[a-zA-Z\s'-]+$/, { 
+      message: "First name can only contain letters, spaces, hyphens, and apostrophes" 
+    }),
+  last_name: z
+    .string()
+    .trim()
+    .min(1, { message: "Last name is required" })
+    .max(100, { message: "Last name must be less than 100 characters" })
+    .regex(/^[a-zA-Z\s'-]+$/, { 
+      message: "Last name can only contain letters, spaces, hyphens, and apostrophes" 
+    }),
+});
+
+// Password update validation with current password verification
+export const passwordUpdateSchema = z
+  .object({
+    current_password: z
+      .string()
+      .min(1, { message: "Current password is required" }),
+    new_password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters long" })
+      .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
+      .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
+      .regex(/[0-9]/, { message: "Password must contain at least one number" }),
+    confirm_password: z.string(),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords don't match",
+    path: ["confirm_password"],
+  });
+
 export type InviteUserInput = z.infer<typeof inviteUserSchema>;
 export type EditUserInput = z.infer<typeof editUserSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -132,3 +171,5 @@ export type SignupInput = z.infer<typeof signupSchema>;
 export type AddBillInput = z.infer<typeof addBillSchema>;
 export type ResetPasswordEmailInput = z.infer<typeof resetPasswordEmailSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type PersonalInfoInput = z.infer<typeof personalInfoSchema>;
+export type PasswordUpdateInput = z.infer<typeof passwordUpdateSchema>;

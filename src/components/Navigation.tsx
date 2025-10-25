@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Receipt, Users, LogOut, Truck } from 'lucide-react';
+import { Receipt, Users, LogOut, Truck, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 export const Navigation = () => {
   const location = useLocation();
-  const { logout, profile, userRole } = useAuth();
+  const { logout, profile, userRole, userPreferences } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -23,27 +23,31 @@ export const Navigation = () => {
             </div>
             
             <div className="flex items-center gap-1">
-              <Button
-                variant={isActive('/') ? 'secondary' : 'ghost'}
-                size="sm"
-                asChild
-              >
-                <Link to="/" className="gap-2">
-                  <Receipt className="h-4 w-4" />
-                  Bills
-                </Link>
-              </Button>
+              {userPreferences?.bills_enabled && (
+                <Button
+                  variant={isActive('/') ? 'secondary' : 'ghost'}
+                  size="sm"
+                  asChild
+                >
+                  <Link to="/" className="gap-2">
+                    <Receipt className="h-4 w-4" />
+                    Bills
+                  </Link>
+                </Button>
+              )}
               
-              <Button
-                variant={isActive('/doordash') ? 'secondary' : 'ghost'}
-                size="sm"
-                asChild
-              >
-                <Link to="/doordash" className="gap-2">
-                  <Truck className="h-4 w-4" />
-                  DoorDash
-                </Link>
-              </Button>
+              {userPreferences?.doordash_enabled && (
+                <Button
+                  variant={isActive('/doordash') ? 'secondary' : 'ghost'}
+                  size="sm"
+                  asChild
+                >
+                  <Link to="/doordash" className="gap-2">
+                    <Truck className="h-4 w-4" />
+                    DoorDash
+                  </Link>
+                </Button>
+              )}
               
               {userRole === 'admin' && (
                 <Button
@@ -57,6 +61,17 @@ export const Navigation = () => {
                   </Link>
                 </Button>
               )}
+
+              <Button
+                variant={isActive('/settings') ? 'secondary' : 'ghost'}
+                size="sm"
+                asChild
+              >
+                <Link to="/settings" className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Link>
+              </Button>
             </div>
           </div>
           

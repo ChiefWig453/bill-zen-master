@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import type { UserPreferences } from '@/types/settings';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: any | null;
   userRole: 'admin' | 'user' | null;
+  userPreferences: UserPreferences | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -32,6 +34,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'user' | null>(null);
+  const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -41,15 +44,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Defer profile and role fetch to avoid deadlock
+        // Defer profile, role, and preferences fetch to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
             fetchUserProfile(session.user.id);
             fetchUserRole(session.user.id);
+            fetchUserPreferences(session.user.id);
           }, 0);
         } else {
           setProfile(null);
           setUserRole(null);
+          setUserPreferences(null);
         }
         
         setIsLoading(false);
@@ -65,6 +70,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setTimeout(() => {
           fetchUserProfile(session.user.id);
           fetchUserRole(session.user.id);
+          fetchUserPreferences(session.user.id);
         }, 0);
       }
       
@@ -106,6 +112,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       setUserRole(data?.role || null);
+    } catch (error) {
+      // Don't log sensitive error details to console in production
+    }
+  };
+
+  const fetchUserPreferences = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        return;
+      }
+      
+      setUserPreferences(data);
     } catch (error) {
       // Don't log sensitive error details to console in production
     }
@@ -159,7 +183,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, userRole, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, session, profile, userRole, userPreferences, login, signup, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

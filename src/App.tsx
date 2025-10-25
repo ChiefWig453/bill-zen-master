@@ -2,19 +2,20 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { AuthContainer } from "./components/AuthContainer";
 import Index from "./pages/Index";
 import UserManagement from "./pages/UserManagement";
 import DoorDash from "./pages/DoorDash";
 import ResetPassword from "./pages/ResetPassword";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const ProtectedApp = () => {
-  const { user, userRole, isLoading } = useAuth();
+  const { user, userRole, userPreferences, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -33,9 +34,21 @@ const ProtectedApp = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         {user ? (
           <>
-            <Route path="/" element={<Index />} />
-            <Route path="/doordash" element={<DoorDash />} />
+            <Route path="/settings" element={<Settings />} />
+            
+            {userPreferences?.bills_enabled && (
+              <Route path="/" element={<Index />} />
+            )}
+            
+            {userPreferences?.doordash_enabled && (
+              <Route path="/doordash" element={<DoorDash />} />
+            )}
+            
             {userRole === 'admin' && <Route path="/users" element={<UserManagement />} />}
+            
+            {!userPreferences?.bills_enabled && !userPreferences?.doordash_enabled && (
+              <Route path="/" element={<Navigate to="/settings" replace />} />
+            )}
           </>
         ) : (
           <Route path="/" element={<AuthContainer />} />
