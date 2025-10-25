@@ -9,6 +9,7 @@ interface AuthContextType {
   profile: any | null;
   userRole: 'admin' | 'user' | null;
   userPreferences: UserPreferences | null;
+  updateUserPreferences: (updates: Partial<Pick<UserPreferences, 'bills_enabled' | 'doordash_enabled'>>) => Promise<void>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -178,6 +179,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const updateUserPreferences = async (updates: Partial<Pick<UserPreferences, 'bills_enabled' | 'doordash_enabled'>>): Promise<void> => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .upsert({ user_id: user.id, ...updates }, { onConflict: 'user_id' })
+        .select()
+        .single();
+      if (error) return;
+      setUserPreferences(data);
+    } catch (e) {
+      // swallow
+    }
+  };
+
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -226,7 +242,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, userRole, userPreferences, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, session, profile, userRole, userPreferences, updateUserPreferences, login, signup, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

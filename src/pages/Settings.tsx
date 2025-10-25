@@ -8,7 +8,6 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { supabase } from '@/integrations/supabase/client';
 import { personalInfoSchema, passwordUpdateSchema } from '@/lib/validation';
 import type { PersonalInfoFormData, PasswordUpdateFormData } from '@/types/settings';
@@ -16,8 +15,7 @@ import { Navigation } from '@/components/Navigation';
 import { Loader2 } from 'lucide-react';
 
 const Settings = () => {
-  const { user, profile } = useAuth();
-  const { preferences, updatePreferences } = useUserPreferences();
+  const { user, profile, userPreferences, updateUserPreferences } = useAuth();
   const { toast } = useToast();
   const [isUpdatingPersonalInfo, setIsUpdatingPersonalInfo] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
@@ -245,8 +243,8 @@ const Settings = () => {
               </div>
               <Switch
                 id="bills-toggle"
-                checked={preferences?.bills_enabled ?? true}
-                onCheckedChange={(checked) => updatePreferences({ bills_enabled: checked })}
+                checked={userPreferences?.bills_enabled ?? true}
+                onCheckedChange={(checked) => updateUserPreferences({ bills_enabled: checked })}
               />
             </div>
 
@@ -259,8 +257,8 @@ const Settings = () => {
               </div>
               <Switch
                 id="doordash-toggle"
-                checked={preferences?.doordash_enabled ?? false}
-                onCheckedChange={(checked) => updatePreferences({ doordash_enabled: checked })}
+                checked={userPreferences?.doordash_enabled ?? false}
+                onCheckedChange={(checked) => updateUserPreferences({ doordash_enabled: checked })}
               />
             </div>
           </CardContent>
