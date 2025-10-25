@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { signupSchema } from '@/lib/validation';
 
 interface SignupFormProps {
   onSwitchToLogin: () => void;
@@ -24,65 +25,20 @@ export const SignupForm = ({ onSwitchToLogin }: SignupFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Validate input with Zod
+    const validationResult = signupSchema.safeParse({
+      email: email.trim(),
+      password,
+      confirmPassword,
+      firstName: firstName.trim(),
+      lastName: lastName.trim()
+    });
 
-    if (password !== confirmPassword) {
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
       toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Enhanced password security requirements
-    if (password.length < 8) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 8 characters long",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      toast({
-        title: "Password too weak",
-        description: "Password must contain at least one uppercase letter",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!/[a-z]/.test(password)) {
-      toast({
-        title: "Password too weak",
-        description: "Password must contain at least one lowercase letter",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!/[0-9]/.test(password)) {
-      toast({
-        title: "Password too weak",
-        description: "Password must contain at least one number",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      toast({
-        title: "Password too weak",
-        description: "Password must contain at least one special character (!@#$%^&*)",
+        title: "Validation Error",
+        description: firstError.message,
         variant: "destructive"
       });
       return;

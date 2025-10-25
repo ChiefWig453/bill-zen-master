@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { inviteUserSchema } from '@/lib/validation';
 
 interface InviteUserDialogProps {
   open: boolean;
@@ -26,22 +27,19 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate input
-    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "All fields are required.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Validate input with Zod
+    const validationResult = inviteUserSchema.safeParse({
+      email: email.trim(),
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      role
+    });
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
       toast({
         title: "Validation Error",
-        description: "Please enter a valid email address.",
+        description: firstError.message,
         variant: "destructive",
       });
       return;

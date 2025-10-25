@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { editUserSchema } from '@/lib/validation';
 
 interface EditUserDialogProps {
   open: boolean;
@@ -42,22 +43,19 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
       return;
     }
 
-    // Validate input
-    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "All fields are required.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Validate input with Zod
+    const validationResult = editUserSchema.safeParse({
+      email: email.trim(),
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      role
+    });
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
       toast({
         title: "Validation Error",
-        description: "Please enter a valid email address.",
+        description: firstError.message,
         variant: "destructive",
       });
       return;

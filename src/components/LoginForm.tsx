@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { loginSchema } from '@/lib/validation';
 
 export const LoginForm = () => {
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -19,10 +20,17 @@ export const LoginForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
+    // Validate input with Zod
+    const validationResult = loginSchema.safeParse({
+      email: email.trim(),
+      password
+    });
+
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
       toast({
-        title: "Error",
-        description: "Please enter both email and password",
+        title: "Validation Error",
+        description: firstError.message,
         variant: "destructive"
       });
       return;

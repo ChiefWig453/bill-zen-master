@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Bill } from '@/types/bill';
 import { useCategories } from '@/hooks/useCategories';
 import { useToast } from '@/hooks/use-toast';
+import { addBillSchema, categorySchema } from '@/lib/validation';
 
 interface AddBillFormProps {
   onAddBill: (bill: Omit<Bill, 'id' | 'createdAt'>) => void;
@@ -33,52 +34,24 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit, onCancelAdd 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('Form data:', formData);
-    
-    // Validate required fields
-    if (!formData.name?.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Bill name is required.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      toast({
-        title: "Validation Error", 
-        description: "Please enter a valid amount greater than 0.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!formData.dueDate) {
-      toast({
-        title: "Validation Error",
-        description: "Due date is required.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!formData.category?.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a category.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    console.log('Calling onAddBill with:', {
-      name: formData.name,
+    // Validate input with Zod
+    const validationResult = addBillSchema.safeParse({
+      name: formData.name.trim(),
       amount: parseFloat(formData.amount),
       dueDate: formData.dueDate,
-      category: formData.category,
+      category: formData.category.trim(),
       isPaid: formData.isPaid
     });
+
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
+      toast({
+        title: "Validation Error",
+        description: firstError.message,
+        variant: "destructive"
+      });
+      return;
+    }
 
     onAddBill({
       name: formData.name,
@@ -100,24 +73,36 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit, onCancelAdd 
   };
 
   const handleAddCustomCategory = () => {
-    const trimmedCategory = newCategory.trim();
-    if (trimmedCategory) {
-      const success = addCustomCategory(trimmedCategory);
-      if (success) {
-        setFormData(prev => ({ ...prev, category: trimmedCategory }));
-        setNewCategory('');
-        setShowAddCategory(false);
-        toast({
-          title: "Category added",
-          description: `"${trimmedCategory}" has been added to your categories.`
-        });
-      } else {
-        toast({
-          title: "Category exists",
-          description: "This category already exists.",
-          variant: "destructive"
-        });
-      }
+    // Validate category with Zod
+    const validationResult = categorySchema.safeParse(newCategory);
+    
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
+      toast({
+        title: "Validation Error",
+        description: firstError.message,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const trimmedCategory = validationResult.data;
+    const success = addCustomCategory(trimmedCategory);
+    
+    if (success) {
+      setFormData(prev => ({ ...prev, category: trimmedCategory }));
+      setNewCategory('');
+      setShowAddCategory(false);
+      toast({
+        title: "Category added",
+        description: `"${trimmedCategory}" has been added to your categories.`
+      });
+    } else {
+      toast({
+        title: "Category exists",
+        description: "This category already exists.",
+        variant: "destructive"
+      });
     }
   };
 
