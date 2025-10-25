@@ -265,10 +265,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_current_user_role: { Args: never; Returns: string }
       validate_bill_input: {
         Args: { p_amount: number; p_category: string; p_name: string }
         Returns: boolean

@@ -78,13 +78,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         .single();
       
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching profile:', error);
+        // Don't log sensitive error details to console in production
         return;
       }
       
       setProfile(data);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      // Don't log sensitive error details to console in production
     }
   };
 

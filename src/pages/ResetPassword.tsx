@@ -55,10 +55,47 @@ const ResetPassword = () => {
       return;
     }
 
-    if (password.length < 6) {
+    // Enhanced password security requirements
+    if (password.length < 8) {
       toast({
-        title: "Error",
-        description: "Password must be at least 6 characters long",
+        title: "Password too short",
+        description: "Password must be at least 8 characters long",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      toast({
+        title: "Password too weak",
+        description: "Password must contain at least one uppercase letter",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!/[a-z]/.test(password)) {
+      toast({
+        title: "Password too weak",
+        description: "Password must contain at least one lowercase letter",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      toast({
+        title: "Password too weak",
+        description: "Password must contain at least one number",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      toast({
+        title: "Password too weak",
+        description: "Password must contain at least one special character (!@#$%^&*)",
         variant: "destructive"
       });
       return;

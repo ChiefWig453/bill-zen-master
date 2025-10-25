@@ -76,7 +76,7 @@ const UserManagement = () => {
       if (error) throw error;
       setProfiles(data || []);
     } catch (error) {
-      console.error('Error fetching profiles:', error);
+      // Don't log sensitive error details to console in production
       toast({
         title: "Error",
         description: "Failed to load users.",
@@ -105,7 +105,7 @@ const UserManagement = () => {
         description: `User role has been updated to ${newRole}.`
       });
     } catch (error) {
-      console.error('Error updating role:', error);
+      // Don't log sensitive error details to console in production
       toast({
         title: "Error",
         description: "Failed to update user role.",
@@ -139,7 +139,7 @@ const UserManagement = () => {
         description: "User has been removed from the system."
       });
     } catch (error) {
-      console.error('Error deleting user:', error);
+      // Don't log sensitive error details to console in production
       toast({
         title: "Error",
         description: "Failed to delete user.",
