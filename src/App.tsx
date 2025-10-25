@@ -14,7 +14,7 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const ProtectedApp = () => {
-  const { user, isLoading } = useAuth();
+  const { user, userRole, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -35,7 +35,7 @@ const ProtectedApp = () => {
           <>
             <Route path="/" element={<Index />} />
             <Route path="/doordash" element={<DoorDash />} />
-            <Route path="/users" element={<UserManagement />} />
+            {userRole === 'admin' && <Route path="/users" element={<UserManagement />} />}
           </>
         ) : (
           <Route path="/" element={<AuthContainer />} />

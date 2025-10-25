@@ -68,13 +68,25 @@ const UserManagement = () => {
 
   const fetchProfiles = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProfiles(data || []);
+      if (profilesError) throw profilesError;
+
+      // Fetch roles for all users
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      // Merge roles with profiles
+      const profilesWithRoles = (profilesData || []).map(profile => ({
+        ...profile,
+        role: rolesData?.find(r => r.user_id === profile.id)?.role || 'user'
+      }));
+
+      setProfiles(profilesWithRoles);
     } catch (error) {
       // Don't log sensitive error details to console in production
       toast({
@@ -87,14 +99,31 @@ const UserManagement = () => {
     }
   };
 
-  const updateUserRole = async (userId: string, newRole: string) => {
+  const updateUserRole = async (userId: string, newRole: 'admin' | 'user') => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', userId);
+      // Check if role already exists
+      const { data: existingRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
 
-      if (error) throw error;
+      if (existingRole) {
+        // Update existing role
+        const { error } = await supabase
+          .from('user_roles')
+          .update({ role: newRole })
+          .eq('user_id', userId);
+
+        if (error) throw error;
+      } else {
+        // Insert new role
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role: newRole });
+
+        if (error) throw error;
+      }
 
       setProfiles(prev => prev.map(p => 
         p.id === userId ? { ...p, role: newRole } : p

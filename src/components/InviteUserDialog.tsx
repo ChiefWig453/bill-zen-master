@@ -18,7 +18,7 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState('user');
+  const [role, setRole] = useState<'user' | 'admin'>('user');
   const [isLoading, setIsLoading] = useState(false);
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -61,6 +61,37 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
         throw new Error('A user with this email already exists');
       }
 
+      // Create the profile directly since we're not using Supabase auth signup
+      const newUserId = crypto.randomUUID();
+      const currentUser = await supabase.auth.getUser();
+      
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: newUserId,
+            email,
+            first_name: firstName,
+            last_name: lastName,
+            invited_by: currentUser.data.user?.id,
+            invited_at: new Date().toISOString(),
+          },
+        ]);
+
+      if (insertError) throw insertError;
+
+      // Insert role into user_roles table
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert([
+          {
+            user_id: newUserId,
+            role: role,
+          },
+        ]);
+
+      if (roleError) throw roleError;
+
       toast({
         title: "Invitation prepared",
         description: `${email} can now sign up with the specified role. Note: In a production app, an email invitation would be sent.`
@@ -74,7 +105,6 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
       
       onSuccess();
     } catch (error: any) {
-      console.error('Error inviting user:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to send invitation.",
@@ -130,7 +160,7 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
           
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select value={role} onValueChange={(value) => setRole(value as 'user' | 'admin')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

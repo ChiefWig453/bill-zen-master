@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: any | null;
+  userRole: 'admin' | 'user' | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -30,6 +31,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'user' | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -39,13 +41,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Defer profile fetch to avoid deadlock
+        // Defer profile and role fetch to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
             fetchUserProfile(session.user.id);
+            fetchUserRole(session.user.id);
           }, 0);
         } else {
           setProfile(null);
+          setUserRole(null);
         }
         
         setIsLoading(false);
@@ -60,6 +64,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (session?.user) {
         setTimeout(() => {
           fetchUserProfile(session.user.id);
+          fetchUserRole(session.user.id);
         }, 0);
       }
       
@@ -83,6 +88,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       setProfile(data);
+    } catch (error) {
+      // Don't log sensitive error details to console in production
+    }
+  };
+
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        return;
+      }
+      
+      setUserRole(data?.role || null);
     } catch (error) {
       // Don't log sensitive error details to console in production
     }
@@ -136,7 +159,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, session, profile, userRole, login, signup, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

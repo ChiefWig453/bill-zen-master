@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 export const Navigation = () => {
   const location = useLocation();
-  const { logout, profile } = useAuth();
+  const { logout, profile, userRole } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -45,7 +45,7 @@ export const Navigation = () => {
                 </Link>
               </Button>
               
-              {profile?.role === 'admin' && (
+              {userRole === 'admin' && (
                 <Button
                   variant={isActive('/users') ? 'secondary' : 'ghost'}
                   size="sm"

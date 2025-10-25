@@ -19,7 +19,7 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
   const [firstName, setFirstName] = useState(user?.first_name || '');
   const [lastName, setLastName] = useState(user?.last_name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [role, setRole] = useState(user?.role || 'user');
+  const [role, setRole] = useState<'user' | 'admin'>(user?.role || 'user');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
@@ -66,17 +66,39 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
+      // Update profile (without role)
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           email: email.trim(),
-          role: role
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update role in user_roles table
+      const { data: existingRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingRole) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .update({ role })
+          .eq('user_id', user.id);
+        
+        if (roleError) throw roleError;
+      } else {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: user.id, role });
+        
+        if (roleError) throw roleError;
+      }
 
       toast({
         title: "User updated",
@@ -86,7 +108,6 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error updating user:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to update user.",
@@ -144,7 +165,7 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
             <Label htmlFor="role">Role</Label>
             <Select 
               value={role} 
-              onValueChange={setRole}
+              onValueChange={(value) => setRole(value as 'user' | 'admin')}
               disabled={currentUser?.id === user.id}
             >
               <SelectTrigger>
