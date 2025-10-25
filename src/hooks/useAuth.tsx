@@ -10,6 +10,7 @@ interface AuthContextType {
   userRole: 'admin' | 'user' | null;
   userPreferences: UserPreferences | null;
   updateUserPreferences: (updates: Partial<Pick<UserPreferences, 'bills_enabled' | 'doordash_enabled'>>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -196,6 +197,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const refreshProfile = async (): Promise<void> => {
+    if (!user) return;
+    await fetchUserProfile(user.id);
+  };
+
   const updateUserPreferences = async (updates: Partial<Pick<UserPreferences, 'bills_enabled' | 'doordash_enabled'>>): Promise<void> => {
     if (!user) return;
     try {
@@ -259,7 +265,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, userRole, userPreferences, updateUserPreferences, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, session, profile, userRole, userPreferences, updateUserPreferences, refreshProfile, login, signup, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

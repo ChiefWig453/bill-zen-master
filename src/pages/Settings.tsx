@@ -15,7 +15,7 @@ import { Navigation } from '@/components/Navigation';
 import { Loader2 } from 'lucide-react';
 
 const Settings = () => {
-  const { user, profile, userPreferences, updateUserPreferences } = useAuth();
+  const { user, profile, userPreferences, updateUserPreferences, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [isUpdatingPersonalInfo, setIsUpdatingPersonalInfo] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
@@ -68,6 +68,15 @@ const Settings = () => {
         .select('*')
         .eq('id', user.id)
         .single();
+
+      if (updatedProfile) {
+        personalInfoForm.reset({
+          first_name: updatedProfile.first_name || '',
+          last_name: updatedProfile.last_name || '',
+        });
+      }
+
+      await refreshProfile();
 
       toast({
         title: "Success",
