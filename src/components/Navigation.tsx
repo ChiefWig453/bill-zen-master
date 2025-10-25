@@ -23,7 +23,7 @@ export const Navigation = () => {
             </div>
             
             <div className="flex items-center gap-1">
-              {userPreferences?.bills_enabled && (
+              {(userPreferences?.bills_enabled ?? true) && (
                 <Button
                   variant={isActive('/') ? 'secondary' : 'ghost'}
                   size="sm"
@@ -36,7 +36,7 @@ export const Navigation = () => {
                 </Button>
               )}
               
-              {userPreferences?.doordash_enabled && (
+              {(userPreferences?.doordash_enabled ?? false) && (
                 <Button
                   variant={isActive('/doordash') ? 'secondary' : 'ghost'}
                   size="sm"

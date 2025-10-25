@@ -28,6 +28,10 @@ const ProtectedApp = () => {
     );
   }
 
+  // Default to bills enabled if preferences don't exist yet
+  const billsEnabled = userPreferences?.bills_enabled ?? true;
+  const doordashEnabled = userPreferences?.doordash_enabled ?? false;
+
   return (
     <BrowserRouter>
       <Routes>
@@ -36,17 +40,17 @@ const ProtectedApp = () => {
           <>
             <Route path="/settings" element={<Settings />} />
             
-            {userPreferences?.bills_enabled && (
+            {billsEnabled && (
               <Route path="/" element={<Index />} />
             )}
             
-            {userPreferences?.doordash_enabled && (
+            {doordashEnabled && (
               <Route path="/doordash" element={<DoorDash />} />
             )}
             
             {userRole === 'admin' && <Route path="/users" element={<UserManagement />} />}
             
-            {!userPreferences?.bills_enabled && !userPreferences?.doordash_enabled && (
+            {!billsEnabled && !doordashEnabled && (
               <Route path="/" element={<Navigate to="/settings" replace />} />
             )}
           </>
