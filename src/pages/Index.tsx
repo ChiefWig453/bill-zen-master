@@ -20,6 +20,7 @@ import { BillTemplatesTab } from '@/components/BillTemplatesTab';
 import { AddIncomeForm } from '@/components/AddIncomeForm';
 import { IncomeStats } from '@/components/IncomeStats';
 import { IncomeTable } from '@/components/IncomeTable';
+import { BillsDashboard } from '@/components/BillsDashboard';
 import { useBills, Bill as DBBill } from '@/hooks/useBills';
 import { useIncomes } from '@/hooks/useIncomes';
 import { Income, INCOME_CATEGORIES } from '@/types/income';
@@ -470,12 +471,30 @@ const Index = () => {
           )}
 
           {/* Main Content Tabs */}
-          <Tabs defaultValue="bills" className="space-y-6">
+          <Tabs defaultValue="dashboard" className="space-y-6">
             <TabsList>
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="bills">Bills</TabsTrigger>
               <TabsTrigger value="income">Income ({incomes.length})</TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="dashboard">
+              <BillsDashboard 
+                bills={bills}
+                incomes={incomes}
+                onEditBill={(bill) => {
+                  setEditingBill(bill);
+                  setShowAddForm(true);
+                }}
+                onEditIncome={(income) => {
+                  handleEditIncome(income);
+                }}
+                onBillUpdated={() => {
+                  // Bills will automatically update via realtime subscription
+                }}
+              />
+            </TabsContent>
 
             <TabsContent value="bills">
               <Tabs defaultValue="unpaid" className="space-y-4">
