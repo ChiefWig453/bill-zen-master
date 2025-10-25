@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { resetPasswordEmailSchema } from '@/lib/validation';
 
 interface ResetPasswordDialogProps {
   open: boolean;
@@ -20,10 +21,14 @@ export const ResetPasswordDialog = ({ open, onOpenChange }: ResetPasswordDialogP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email) {
+    // Validate email using Zod schema
+    const validation = resetPasswordEmailSchema.safeParse({ email });
+    
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
       toast({
-        title: "Error",
-        description: "Please enter your email address",
+        title: "Validation Error",
+        description: firstError.message,
         variant: "destructive"
       });
       return;

@@ -103,9 +103,32 @@ export const categorySchema = z.string()
   .max(100, { message: "Category name must be less than 100 characters" })
   .regex(/^[a-zA-Z0-9\s&-]+$/, { message: "Category can only contain letters, numbers, spaces, hyphens, and ampersands" });
 
+// Password reset validation schemas
+export const resetPasswordEmailSchema = z.object({
+  email: z.string()
+    .trim()
+    .email({ message: "Invalid email address" })
+    .max(255, { message: "Email must be less than 255 characters" })
+});
+
+export const resetPasswordSchema = z.object({
+  password: z.string()
+    .min(8, { message: "Password must be at least 8 characters long" })
+    .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
+    .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
+    .regex(/[0-9]/, { message: "Password must contain at least one number" })
+    .regex(/[^A-Za-z0-9]/, { message: "Password must contain at least one special character" }),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"]
+});
+
 // Type exports for TypeScript
 export type InviteUserInput = z.infer<typeof inviteUserSchema>;
 export type EditUserInput = z.infer<typeof editUserSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;
 export type AddBillInput = z.infer<typeof addBillSchema>;
+export type ResetPasswordEmailInput = z.infer<typeof resetPasswordEmailSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
