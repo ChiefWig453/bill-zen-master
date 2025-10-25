@@ -80,6 +80,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Set up real-time subscription for preferences changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('auth-user-preferences-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_preferences',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchUserPreferences(user.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -123,13 +148,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         .from('user_preferences')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         return;
       }
       
-      setUserPreferences(data);
+      // If no preferences exist, create default ones
+      if (!data) {
+        const { data: newPrefs, error: insertError } = await supabase
+          .from('user_preferences')
+          .insert({
+            user_id: userId,
+            bills_enabled: true,
+            doordash_enabled: false,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          return;
+        }
+        setUserPreferences(newPrefs);
+      } else {
+        setUserPreferences(data);
+      }
     } catch (error) {
       // Don't log sensitive error details to console in production
     }
