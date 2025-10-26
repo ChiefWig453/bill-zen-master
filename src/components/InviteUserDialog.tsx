@@ -59,8 +59,8 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
         throw new Error('A user with this email already exists');
       }
 
-      // Create user in Supabase Auth with a temporary password
-      const temporaryPassword = crypto.randomUUID();
+      // Create user in Supabase Auth with a temporary password that meets requirements
+      const temporaryPassword = `Temp${crypto.randomUUID()}!${Math.floor(Math.random() * 1000)}`;
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
         password: temporaryPassword,
