@@ -476,8 +476,8 @@ const Index = () => {
           <Tabs defaultValue="dashboard" className="space-y-6">
             <TabsList>
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="income">Income ({incomes.length})</TabsTrigger>
               <TabsTrigger value="templates">Recurring Bills</TabsTrigger>
+              <TabsTrigger value="income">Income ({incomes.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dashboard">
