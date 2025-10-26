@@ -59,36 +59,44 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
         throw new Error('A user with this email already exists');
       }
 
-      // Create the profile directly since we're not using Supabase auth signup
-      const newUserId = crypto.randomUUID();
+      // Create user in Supabase Auth with a temporary password
+      const temporaryPassword = crypto.randomUUID();
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: temporaryPassword,
+        options: {
+          data: {
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+          },
+          emailRedirectTo: `${window.location.origin}/reset-password`
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Failed to create user');
+
+      // Update the profile with invitation info
       const currentUser = await supabase.auth.getUser();
-      
-      const { error: insertError } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
-        .insert([
-          {
-            id: newUserId,
-            email,
-            first_name: firstName,
-            last_name: lastName,
-            invited_by: currentUser.data.user?.id,
-            invited_at: new Date().toISOString(),
-          },
-        ]);
+        .update({
+          invited_by: currentUser.data.user?.id,
+          invited_at: new Date().toISOString(),
+        })
+        .eq('id', authData.user.id);
 
-      if (insertError) throw insertError;
+      if (updateError) throw updateError;
 
-      // Insert role into user_roles table
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert([
-          {
-            user_id: newUserId,
-            role: role,
-          },
-        ]);
+      // Update role in user_roles table if not default 'user'
+      if (role === 'admin') {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .update({ role: 'admin' })
+          .eq('user_id', authData.user.id);
 
-      if (roleError) throw roleError;
+        if (roleError) throw roleError;
+      }
 
       toast({
         title: "Invitation prepared",
