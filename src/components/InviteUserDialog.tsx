@@ -48,59 +48,39 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
     setIsLoading(true);
 
     try {
-      // Check if user already exists
-      const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', email.trim())
-        .single();
-
-      if (existingUser) {
-        throw new Error('A user with this email already exists');
+      // Call edge function to invite user (uses admin API to avoid logging in the new user)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('You must be logged in to invite users');
       }
 
-      // Create user in Supabase Auth with a temporary password that meets requirements
-      const temporaryPassword = `Temp${crypto.randomUUID()}!${Math.floor(Math.random() * 1000)}`;
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password: temporaryPassword,
-        options: {
-          data: {
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
+      const response = await fetch(
+        `https://rzzxfufbiziokdhaokcn.supabase.co/functions/v1/invite-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
           },
-          emailRedirectTo: `${window.location.origin}/reset-password`
+          body: JSON.stringify({
+            email: email.trim(),
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            role,
+          }),
         }
-      });
+      );
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
+      const result = await response.json();
 
-      // Update the profile with invitation info
-      const currentUser = await supabase.auth.getUser();
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          invited_by: currentUser.data.user?.id,
-          invited_at: new Date().toISOString(),
-        })
-        .eq('id', authData.user.id);
-
-      if (updateError) throw updateError;
-
-      // Update role in user_roles table if not default 'user'
-      if (role === 'admin') {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .update({ role: 'admin' })
-          .eq('user_id', authData.user.id);
-
-        if (roleError) throw roleError;
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to invite user');
       }
 
       toast({
-        title: "Invitation prepared",
-        description: `${email} can now sign up with the specified role. Note: In a production app, an email invitation would be sent.`
+        title: "User invited successfully",
+        description: result.message || `${email} has been invited and can now sign in.`
       });
 
       // Reset form
