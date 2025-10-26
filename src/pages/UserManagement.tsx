@@ -154,12 +154,29 @@ const UserManagement = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('You must be logged in to delete users');
+      }
 
-      if (error) throw error;
+      const response = await fetch(
+        `https://rzzxfufbiziokdhaokcn.supabase.co/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete user');
+      }
 
       setProfiles(prev => prev.filter(p => p.id !== userId));
 
@@ -167,11 +184,10 @@ const UserManagement = () => {
         title: "User deleted",
         description: "User has been removed from the system."
       });
-    } catch (error) {
-      // Don't log sensitive error details to console in production
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to delete user.",
+        description: error.message || "Failed to delete user.",
         variant: "destructive"
       });
     }
@@ -238,25 +254,41 @@ const UserManagement = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .in('id', selectedUsers);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('You must be logged in to delete users');
+      }
 
-      if (error) throw error;
+      const response = await fetch(
+        `https://rzzxfufbiziokdhaokcn.supabase.co/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ userIds: selectedUsers }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete users');
+      }
 
       setProfiles(prev => prev.filter(p => !selectedUsers.includes(p.id)));
       setSelectedUsers([]);
 
       toast({
         title: "Users deleted",
-        description: `${selectedUsers.length} user(s) have been deleted.`
+        description: result.message || `${selectedUsers.length} user(s) have been deleted.`
       });
-    } catch (error) {
-      console.error('Error deleting users:', error);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to delete users.",
+        description: error.message || "Failed to delete users.",
         variant: "destructive"
       });
     }
