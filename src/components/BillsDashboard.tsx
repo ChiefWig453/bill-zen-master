@@ -1,11 +1,14 @@
 import { BillsCalendar } from './BillsCalendar';
 import { UpcomingBillsTable } from './UpcomingBillsTable';
+import { MonthlyBillsChecklist } from './MonthlyBillsChecklist';
 import { Bill } from '@/hooks/useBills';
 import { Income } from '@/types/income';
+import { BillTemplate } from '@/hooks/useBillTemplatesSecure';
 
 interface BillsDashboardProps {
   bills: Bill[];
   incomes: Income[];
+  templates: BillTemplate[];
   onEditBill?: (bill: Bill) => void;
   onEditIncome?: (income: Income) => void;
   onBillUpdated?: () => void;
@@ -13,7 +16,8 @@ interface BillsDashboardProps {
 
 export const BillsDashboard = ({ 
   bills, 
-  incomes, 
+  incomes,
+  templates,
   onEditBill, 
   onEditIncome,
   onBillUpdated 
@@ -27,13 +31,18 @@ export const BillsDashboard = ({
           onEditBill={onEditBill}
           onEditIncome={onEditIncome}
         />
-        <div className="lg:col-span-2">
-          <UpcomingBillsTable 
-            bills={bills} 
-            onEditBill={onEditBill}
-            onBillUpdated={onBillUpdated}
-          />
-        </div>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <UpcomingBillsTable 
+          bills={bills} 
+          onEditBill={onEditBill}
+          onBillUpdated={onBillUpdated}
+        />
+        <MonthlyBillsChecklist
+          templates={templates}
+          bills={bills}
+          onBillUpdated={onBillUpdated}
+        />
       </div>
     </div>
   );

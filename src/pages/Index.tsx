@@ -26,6 +26,7 @@ import { useIncomes } from '@/hooks/useIncomes';
 import { Income, INCOME_CATEGORIES } from '@/types/income';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useBillTemplatesSecure } from '@/hooks/useBillTemplatesSecure';
 
 const Index = () => {
   const [editingBill, setEditingBill] = useState<DBBill | null>(null);
@@ -46,6 +47,7 @@ const Index = () => {
   const { user } = useAuth();
   const { bills, isLoading, addBill, updateBill, deleteBill, duplicateBill } = useBills();
   const { incomes, isLoading: isLoadingIncomes, addIncome, updateIncome, deleteIncome, markIncomeReceived } = useIncomes();
+  const { templates } = useBillTemplatesSecure();
 
   // Convert database Bill to legacy Bill format for components
   const convertToLegacyBill = (dbBill: DBBill): LegacyBill => ({
@@ -483,6 +485,7 @@ const Index = () => {
               <BillsDashboard 
                 bills={bills}
                 incomes={incomes}
+                templates={templates}
                 onEditBill={(bill) => {
                   setEditingBill(bill);
                   setShowAddForm(true);
