@@ -1,5 +1,4 @@
 import { BillsCalendar } from './BillsCalendar';
-import { UpcomingBillsTable } from './UpcomingBillsTable';
 import { MonthlyBillsChecklist } from './MonthlyBillsChecklist';
 import { Bill } from '@/hooks/useBills';
 import { Income } from '@/types/income';
@@ -30,13 +29,6 @@ export const BillsDashboard = ({
           incomes={incomes}
           onEditBill={onEditBill}
           onEditIncome={onEditIncome}
-        />
-      </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <UpcomingBillsTable 
-          bills={bills} 
-          onEditBill={onEditBill}
-          onBillUpdated={onBillUpdated}
         />
         <MonthlyBillsChecklist
           templates={templates}
