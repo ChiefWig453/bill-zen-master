@@ -381,45 +381,7 @@ const Index = () => {
           <IncomeStats incomes={incomes} />
 
           {/* Controls */}
-          <div className="flex items-center justify-between">
-            <div className="flex gap-4">
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {BILL_CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Bills</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                  <SelectItem value="due-soon">Due Soon</SelectItem>
-                  <SelectItem value="upcoming">Upcoming</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Button
-                variant={showArchived ? "default" : "outline"}
-                onClick={() => setShowArchived(!showArchived)}
-                className="gap-2"
-              >
-                {showArchived ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                {showArchived ? 'Hide Archived' : 'Show Archived'}
-              </Button>
-            </div>
-            
+          <div className="flex items-center justify-end">
             <div className="flex gap-2">
               <Button 
                 variant="outline"
