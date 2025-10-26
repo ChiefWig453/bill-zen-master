@@ -80,7 +80,7 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
 
       toast({
         title: "User invited successfully",
-        description: result.message || `${email} has been invited and can now sign in.`
+        description: result.action_link ? `${result.message}\nInvite link (debug): ${result.action_link}` : (result.message || `${email} has been invited and can now sign in.`)
       });
 
       // Reset form

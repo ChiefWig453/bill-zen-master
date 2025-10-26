@@ -121,7 +121,9 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: `${email} has been invited and will receive an email to set their password.` 
+        message: `${email} has been invited and will receive an email to set their password.`,
+        action_link: inviteData?.properties?.action_link ?? null,
+        invite_user_id: inviteData?.user?.id ?? null
       }),
       {
         status: 200,
