@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MaintenanceChecklist } from "@/components/MaintenanceChecklist";
+import { AddMaintenanceTaskDialog } from "@/components/AddMaintenanceTaskDialog";
 import { useMaintenanceTasks } from "@/hooks/useMaintenanceTasks";
 import { Navigation } from "@/components/Navigation";
 import { Wrench } from "lucide-react";
@@ -13,14 +14,17 @@ const HomeMaintenance = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <main className="container mx-auto py-8 px-4">
-        <div className="flex items-center gap-3 mb-6">
-          <Wrench className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Home Maintenance</h1>
-            <p className="text-muted-foreground">
-              Keep track of your home maintenance tasks and stay on schedule
-            </p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Wrench className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold">Home Maintenance</h1>
+              <p className="text-muted-foreground">
+                Keep track of your home maintenance tasks and stay on schedule
+              </p>
+            </div>
           </div>
+          <AddMaintenanceTaskDialog />
         </div>
 
       <Tabs defaultValue="weekly" className="space-y-6">
