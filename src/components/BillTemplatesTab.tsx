@@ -346,19 +346,7 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                         </TableCell>
                         <TableCell className="py-4">
                           <div className="flex items-center justify-center gap-1">
-                            <Button 
-                              size="sm" 
-                              variant={template.amount ? "default" : "outline"}
-                              onClick={() => handleCreateBill(template)}
-                              className="gap-1 text-xs px-2 py-1 h-7"
-                              disabled={template.amount == null}
-                              title={template.amount == null ? 'Add an amount to enable quick create' : `Create bill for ${template.name}`}
-                            >
-                              <Calendar className="h-3 w-3" />
-                              {template.amount ? 'Quick Create' : 'Need Amount'}
-                            </Button>
-                            
-                            <Button 
+                            <Button
                               size="sm" 
                               variant="ghost"
                               onClick={() => handleEdit(template)}
