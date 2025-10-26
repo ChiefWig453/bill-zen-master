@@ -1,1 +1,4 @@
 project_id = "rzzxfufbiziokdhaokcn"
+
+[functions.send-maintenance-reminders]
+verify_jwt = false
