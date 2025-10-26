@@ -73,16 +73,15 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("A user with this email already exists");
     }
 
-    // Create user with admin API (doesn't auto-login)
-    const temporaryPassword = `Temp${crypto.randomUUID()}!${Math.floor(Math.random() * 1000)}`;
-    
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+    // Create user and generate password reset link (sends email automatically)
+    const { data: inviteData, error: createError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'invite',
       email: email.trim(),
-      password: temporaryPassword,
-      email_confirm: true, // Auto-confirm email
-      user_metadata: {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
+      options: {
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+        },
       },
     });
 
@@ -90,7 +89,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw createError;
     }
 
-    if (!newUser.user) {
+    if (!inviteData.user) {
       throw new Error("Failed to create user");
     }
 
@@ -101,7 +100,7 @@ const handler = async (req: Request): Promise<Response> => {
         invited_by: user.id,
         invited_at: new Date().toISOString(),
       })
-      .eq("id", newUser.user.id);
+      .eq("id", inviteData.user.id);
 
     if (updateError) {
       console.error("Error updating profile:", updateError);
@@ -112,7 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { error: roleUpdateError } = await supabaseAdmin
         .from("user_roles")
         .update({ role: 'admin' })
-        .eq("user_id", newUser.user.id);
+        .eq("user_id", inviteData.user.id);
 
       if (roleUpdateError) {
         console.error("Error updating role:", roleUpdateError);
@@ -122,7 +121,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: `${email} has been invited. They can now sign in with a temporary password that will be sent via email.` 
+        message: `${email} has been invited and will receive an email to set their password.` 
       }),
       {
         status: 200,
