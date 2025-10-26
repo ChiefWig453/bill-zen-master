@@ -8,6 +8,7 @@ import { AuthContainer } from "./components/AuthContainer";
 import Index from "./pages/Index";
 import UserManagement from "./pages/UserManagement";
 import DoorDash from "./pages/DoorDash";
+import HomeMaintenance from "./pages/HomeMaintenance";
 import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -31,6 +32,7 @@ const ProtectedApp = () => {
   // Default to bills enabled if preferences don't exist yet
   const billsEnabled = userPreferences?.bills_enabled ?? true;
   const doordashEnabled = userPreferences?.doordash_enabled ?? false;
+  const homeMaintenanceEnabled = userPreferences?.home_maintenance_enabled ?? false;
 
   return (
     <BrowserRouter>
@@ -48,9 +50,13 @@ const ProtectedApp = () => {
               <Route path="/doordash" element={<DoorDash />} />
             )}
             
+            {homeMaintenanceEnabled && (
+              <Route path="/maintenance" element={<HomeMaintenance />} />
+            )}
+            
             {userRole === 'admin' && <Route path="/users" element={<UserManagement />} />}
             
-            {!billsEnabled && !doordashEnabled && (
+            {!billsEnabled && !doordashEnabled && !homeMaintenanceEnabled && (
               <Route path="/" element={<Navigate to="/settings" replace />} />
             )}
           </>

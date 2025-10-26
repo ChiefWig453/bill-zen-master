@@ -224,6 +224,89 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_history: {
+        Row: {
+          completed_at: string
+          created_at: string
+          id: string
+          notes: string | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_tasks: {
+        Row: {
+          created_at: string
+          description: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          is_custom: boolean
+          last_completed_at: string | null
+          name: string
+          next_due_date: string | null
+          reminder_days_before: number
+          season: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          frequency: string
+          id?: string
+          is_active?: boolean
+          is_custom?: boolean
+          last_completed_at?: string | null
+          name: string
+          next_due_date?: string | null
+          reminder_days_before?: number
+          season?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          is_custom?: boolean
+          last_completed_at?: string | null
+          name?: string
+          next_due_date?: string | null
+          reminder_days_before?: number
+          season?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -262,6 +345,7 @@ export type Database = {
           bills_enabled: boolean
           created_at: string
           doordash_enabled: boolean
+          home_maintenance_enabled: boolean
           id: string
           updated_at: string
           user_id: string
@@ -270,6 +354,7 @@ export type Database = {
           bills_enabled?: boolean
           created_at?: string
           doordash_enabled?: boolean
+          home_maintenance_enabled?: boolean
           id?: string
           updated_at?: string
           user_id: string
@@ -278,6 +363,7 @@ export type Database = {
           bills_enabled?: boolean
           created_at?: string
           doordash_enabled?: boolean
+          home_maintenance_enabled?: boolean
           id?: string
           updated_at?: string
           user_id?: string

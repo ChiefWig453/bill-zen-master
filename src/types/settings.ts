@@ -3,6 +3,7 @@ export interface UserPreferences {
   user_id: string;
   bills_enabled: boolean;
   doordash_enabled: boolean;
+  home_maintenance_enabled: boolean;
   created_at: string;
   updated_at: string;
 }

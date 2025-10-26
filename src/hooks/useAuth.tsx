@@ -9,7 +9,7 @@ interface AuthContextType {
   profile: any | null;
   userRole: 'admin' | 'user' | null;
   userPreferences: UserPreferences | null;
-  updateUserPreferences: (updates: Partial<Pick<UserPreferences, 'bills_enabled' | 'doordash_enabled'>>) => Promise<void>;
+  updateUserPreferences: (updates: Partial<Pick<UserPreferences, 'bills_enabled' | 'doordash_enabled' | 'home_maintenance_enabled'>>) => Promise<void>;
   refreshProfile: () => Promise<void>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; error?: string }>;
@@ -202,7 +202,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     await fetchUserProfile(user.id);
   };
 
-  const updateUserPreferences = async (updates: Partial<Pick<UserPreferences, 'bills_enabled' | 'doordash_enabled'>>): Promise<void> => {
+  const updateUserPreferences = async (updates: Partial<Pick<UserPreferences, 'bills_enabled' | 'doordash_enabled' | 'home_maintenance_enabled'>>): Promise<void> => {
     if (!user) return;
     try {
       const { data, error } = await supabase

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Receipt, Users, LogOut, Truck, Settings } from 'lucide-react';
+import { Receipt, Users, LogOut, Truck, Settings, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -44,6 +44,19 @@ export const Navigation = () => {
                   <Link to="/doordash" className="gap-2">
                     <Truck className="h-4 w-4" />
                     DoorDash
+                  </Link>
+                </Button>
+              )}
+              
+              {(userPreferences?.home_maintenance_enabled ?? false) && (
+                <Button
+                  variant={isActive('/maintenance') ? 'secondary' : 'ghost'}
+                  size="sm"
+                  asChild
+                >
+                  <Link to="/maintenance" className="gap-2">
+                    <Wrench className="h-4 w-4" />
+                    Maintenance
                   </Link>
                 </Button>
               )}

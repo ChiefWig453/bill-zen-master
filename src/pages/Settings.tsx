@@ -287,6 +287,20 @@ const Settings = () => {
                 onCheckedChange={(checked) => updateUserPreferences({ doordash_enabled: checked })}
               />
             </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="maintenance-toggle" className="text-base">Home Maintenance</Label>
+                <p className="text-sm text-muted-foreground">
+                  Track home maintenance tasks and receive email reminders
+                </p>
+              </div>
+              <Switch
+                id="maintenance-toggle"
+                checked={userPreferences?.home_maintenance_enabled ?? false}
+                onCheckedChange={(checked) => updateUserPreferences({ home_maintenance_enabled: checked })}
+              />
+            </div>
           </CardContent>
         </Card>
       </main>
