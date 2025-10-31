@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Receipt, Users, LogOut, Truck, Settings, Wrench, Menu } from 'lucide-react';
+import { Receipt, Users, LogOut, Truck, Settings, Wrench, Menu, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
@@ -88,6 +88,13 @@ export const Navigation = () => {
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex items-center">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Globe className="h-5 w-5 text-primary" />
+            </div>
+          </div>
+          
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks}
