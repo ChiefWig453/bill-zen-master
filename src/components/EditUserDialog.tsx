@@ -118,18 +118,18 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit User</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Edit User</DialogTitle>
+          <DialogDescription className="text-sm">
             Update user information and permissions.
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
+              <Label htmlFor="firstName" className="text-sm">First Name</Label>
               <Input
                 id="firstName"
                 value={firstName}
@@ -138,7 +138,7 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName" className="text-sm">Last Name</Label>
               <Input
                 id="lastName"
                 value={lastName}
@@ -149,7 +149,7 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email" className="text-sm">Email Address</Label>
             <Input
               id="email"
               type="email"
@@ -160,7 +160,7 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role" className="text-sm">Role</Label>
             <Select 
               value={role} 
               onValueChange={(value) => setRole(value as 'user' | 'admin')}
@@ -175,17 +175,17 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
               </SelectContent>
             </Select>
             {currentUser?.id === user.id && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 You cannot modify your own role for security reasons.
               </p>
             )}
           </div>
           
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
               {isLoading ? 'Updating...' : 'Update User'}
             </Button>
           </DialogFooter>

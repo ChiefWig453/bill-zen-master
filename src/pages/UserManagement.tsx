@@ -326,17 +326,17 @@ const UserManagement = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="p-3 sm:p-4 md:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-6 w-6 text-primary" />
+                <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">User Management</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl sm:text-3xl font-bold">User Management</h1>
+                <p className="text-sm text-muted-foreground hidden sm:block">
                   Manage users and their access to the system
                 </p>
               </div>
@@ -345,21 +345,26 @@ const UserManagement = () => {
               <Button 
                 variant="outline" 
                 onClick={exportUsers}
-                className="gap-2"
+                className="gap-2 flex-1 sm:flex-none"
+                size="sm"
               >
                 <Download className="h-4 w-4" />
-                Export
+                <span className="sm:inline">Export</span>
               </Button>
-              <Button onClick={() => setShowInviteDialog(true)} className="gap-2">
+              <Button 
+                onClick={() => setShowInviteDialog(true)} 
+                className="gap-2 flex-1 sm:flex-none"
+                size="sm"
+              >
                 <UserPlus className="h-4 w-4" />
-                Invite User
+                <span className="sm:inline">Invite</span>
               </Button>
             </div>
           </div>
 
           {/* Search and Filters */}
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative flex-1 sm:max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search users..."
@@ -369,7 +374,7 @@ const UserManagement = () => {
               />
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by role" />
               </SelectTrigger>
               <SelectContent>
@@ -382,45 +387,46 @@ const UserManagement = () => {
               <Button 
                 variant="destructive" 
                 onClick={bulkDeleteUsers}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
+                size="sm"
               >
                 <Trash2 className="h-4 w-4" />
-                Delete Selected ({selectedUsers.length})
+                Delete ({selectedUsers.length})
               </Button>
             )}
           </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{profiles.length}</div>
+            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+              <div className="text-xl sm:text-2xl font-bold">{profiles.length}</div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Admins</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Admins</CardTitle>
+              <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+              <div className="text-xl sm:text-2xl font-bold">
                 {profiles.filter(p => p.role === 'admin').length}
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Invites</CardTitle>
-              <Mail className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Pending Invites</CardTitle>
+              <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+              <div className="text-xl sm:text-2xl font-bold">
                 {profiles.filter(p => p.invited_at && !p.first_name).length}
               </div>
             </CardContent>
@@ -429,15 +435,17 @@ const UserManagement = () => {
 
         {/* Users Table */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Users
-                <div className="text-sm font-normal text-muted-foreground">
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <span className="text-lg sm:text-xl">Users</span>
+                <div className="text-xs sm:text-sm font-normal text-muted-foreground">
                   Showing {filteredProfiles.length} of {profiles.length} users
                 </div>
               </CardTitle>
             </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6">
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -527,6 +535,93 @@ const UserManagement = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3 p-3">
+              {filteredProfiles.map((user) => (
+                <Card key={user.id} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            {user.id !== profile?.id && (
+                              <Checkbox
+                                checked={selectedUsers.includes(user.id)}
+                                onCheckedChange={() => toggleSelectUser(user.id)}
+                              />
+                            )}
+                            <h3 className="font-medium text-base">
+                              {user.first_name && user.last_name
+                                ? `${user.first_name} ${user.last_name}`
+                                : user.first_name || 'Pending'
+                              }
+                            </h3>
+                            {user.id === profile?.id && (
+                              <Badge variant="outline" className="text-xs">You</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                        </div>
+                        <Badge variant={getRoleBadgeVariant(user.role)} className="shrink-0 text-xs">
+                          {user.role}
+                        </Badge>
+                      </div>
+                      
+                      <div className="text-xs text-muted-foreground pt-2 border-t">
+                        Joined {new Date(user.created_at).toLocaleDateString()}
+                      </div>
+                      
+                      <div className="flex flex-col gap-2 pt-2 border-t">
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => editUser(user)}
+                            className="gap-1 flex-1 h-9"
+                          >
+                            <Edit className="h-3 w-3" />
+                            Edit
+                          </Button>
+                          {user.role !== 'admin' && user.id !== profile?.id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateUserRole(user.id, 'admin')}
+                              className="flex-1 h-9 text-xs"
+                            >
+                              Make Admin
+                            </Button>
+                          )}
+                          {user.role === 'admin' && user.id !== profile?.id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateUserRole(user.id, 'user')}
+                              className="flex-1 h-9 text-xs"
+                            >
+                              Remove Admin
+                            </Button>
+                          )}
+                        </div>
+                        {user.id !== profile?.id && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => deleteUser(user.id)}
+                            className="w-full h-9"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete User
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </CardContent>
         </Card>
 

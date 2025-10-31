@@ -103,18 +103,18 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Invite New User</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Invite New User</DialogTitle>
+          <DialogDescription className="text-sm">
             Send an invitation to a new user. They'll be able to sign up using the provided email address.
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
+              <Label htmlFor="firstName" className="text-sm">First Name</Label>
               <Input
                 id="firstName"
                 value={firstName}
@@ -123,7 +123,7 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName" className="text-sm">Last Name</Label>
               <Input
                 id="lastName"
                 value={lastName}
@@ -134,7 +134,7 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email" className="text-sm">Email Address</Label>
             <Input
               id="email"
               type="email"
@@ -145,7 +145,7 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role" className="text-sm">Role</Label>
             <Select value={role} onValueChange={(value) => setRole(value as 'user' | 'admin')}>
               <SelectTrigger>
                 <SelectValue />
@@ -157,11 +157,11 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
             </Select>
           </div>
           
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
               {isLoading ? 'Sending...' : 'Send Invitation'}
             </Button>
           </DialogFooter>
