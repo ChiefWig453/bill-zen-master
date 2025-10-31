@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { AddBillForm } from '@/components/AddBillForm';
+import { AddTemplateForm } from '@/components/AddTemplateForm';
 import { BillCard } from '@/components/BillCard';
 import { BillStats } from '@/components/BillStats';
 import { BillDuplicationDialog } from '@/components/BillDuplicationDialog';
@@ -30,7 +31,8 @@ import { useBillTemplatesSecure } from '@/hooks/useBillTemplatesSecure';
 
 const Index = () => {
   const [editingBill, setEditingBill] = useState<DBBill | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddTemplateForm, setShowAddTemplateForm] = useState(false);
+  const [showEditBillForm, setShowEditBillForm] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('due_date');
@@ -105,7 +107,7 @@ const Index = () => {
       console.log('Calling addBill function...');
       const result = await addBill(newBill);
       console.log('addBill result:', result);
-      setShowAddForm(false);
+      setShowEditBillForm(false);
       toast({
         title: "Success",
         description: "Bill created successfully!",
@@ -149,7 +151,7 @@ const Index = () => {
           description: "Please add an amount to this template or use Add Bill to set it.",
           variant: "destructive",
         });
-        setShowAddForm(true);
+        // Just show message, don't open form
         return;
       }
 
@@ -391,8 +393,7 @@ const Index = () => {
               
               <Button 
                 onClick={() => {
-                  setShowAddForm(!showAddForm);
-                  if (editingBill) setEditingBill(null);
+                  setShowAddTemplateForm(!showAddTemplateForm);
                 }}
                 className="gap-2"
               >
@@ -402,17 +403,24 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Add/Edit Forms */}
-          {showAddForm && (
+          {/* Add Template Form */}
+          {showAddTemplateForm && (
+            <AddTemplateForm
+              onCancel={() => setShowAddTemplateForm(false)}
+            />
+          )}
+
+          {/* Edit Bill Form */}
+          {showEditBillForm && editingBill && (
             <AddBillForm
               onAddBill={handleAddBill}
-              editingBill={editingBill ? convertToLegacyBill(editingBill) : null}
+              editingBill={convertToLegacyBill(editingBill)}
               onCancelEdit={() => {
                 setEditingBill(null);
-                setShowAddForm(false);
+                setShowEditBillForm(false);
               }}
               onCancelAdd={() => {
-                setShowAddForm(false);
+                setShowEditBillForm(false);
               }}
             />
           )}
@@ -443,7 +451,7 @@ const Index = () => {
                 templates={templates}
                 onEditBill={(bill) => {
                   setEditingBill(bill);
-                  setShowAddForm(true);
+                  setShowEditBillForm(true);
                 }}
                 onEditIncome={(income) => {
                   handleEditIncome(income);
