@@ -2,12 +2,12 @@ import { BillsCalendar } from './BillsCalendar';
 import { MonthlyBillsChecklist } from './MonthlyBillsChecklist';
 import { Bill } from '@/hooks/useBills';
 import { Income } from '@/types/income';
-import { BillTemplate } from '@/hooks/useBillTemplatesSecure';
+import { RecurringBill } from '@/hooks/useRecurringBills';
 
 interface BillsDashboardProps {
   bills: Bill[];
   incomes: Income[];
-  templates: BillTemplate[];
+  recurringBills: RecurringBill[];
   onEditBill?: (bill: Bill) => void;
   onEditIncome?: (income: Income) => void;
   onBillUpdated?: () => void;
@@ -16,7 +16,7 @@ interface BillsDashboardProps {
 export const BillsDashboard = ({ 
   bills, 
   incomes,
-  templates,
+  recurringBills,
   onEditBill, 
   onEditIncome,
   onBillUpdated 
@@ -27,12 +27,12 @@ export const BillsDashboard = ({
         <BillsCalendar 
           bills={bills} 
           incomes={incomes}
-          templates={templates}
+          recurringBills={recurringBills}
           onEditBill={onEditBill}
           onEditIncome={onEditIncome}
         />
         <MonthlyBillsChecklist
-          templates={templates}
+          recurringBills={recurringBills}
           bills={bills}
           onBillUpdated={onBillUpdated}
         />

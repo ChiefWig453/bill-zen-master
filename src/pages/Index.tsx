@@ -10,15 +10,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AddBillForm } from '@/components/AddBillForm';
-import { AddTemplateForm } from '@/components/AddTemplateForm';
+import { AddRecurringBillForm } from '@/components/AddRecurringBillForm';
 import { BillCard } from '@/components/BillCard';
 import { BillStats } from '@/components/BillStats';
 import { BillDuplicationDialog } from '@/components/BillDuplicationDialog';
 import { Navigation } from '@/components/Navigation';
 import { NotificationBanner } from '@/components/NotificationBanner';
 import { BillStatus, BILL_CATEGORIES, Bill as LegacyBill } from '@/types/bill';
-import { BillTemplate } from '@/types/billTemplate';
-import { BillTemplatesTab } from '@/components/BillTemplatesTab';
+import { RecurringBill } from '@/types/recurringBill';
+import { RecurringBillsTab } from '@/components/RecurringBillsTab';
 import { AddIncomeForm } from '@/components/AddIncomeForm';
 import { IncomeStats } from '@/components/IncomeStats';
 import { IncomeTable } from '@/components/IncomeTable';
@@ -28,11 +28,11 @@ import { useIncomes } from '@/hooks/useIncomes';
 import { Income, INCOME_CATEGORIES } from '@/types/income';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { useBillTemplatesSecure } from '@/hooks/useBillTemplatesSecure';
+import { useRecurringBills } from '@/hooks/useRecurringBills';
 
 const Index = () => {
   const [editingBill, setEditingBill] = useState<DBBill | null>(null);
-  const [showAddTemplateForm, setShowAddTemplateForm] = useState(false);
+  const [showAddRecurringBillForm, setShowAddRecurringBillForm] = useState(false);
   const [showEditBillForm, setShowEditBillForm] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -50,7 +50,7 @@ const Index = () => {
   const { user } = useAuth();
   const { bills, isLoading, addBill, updateBill, deleteBill, duplicateBill } = useBills();
   const { incomes, isLoading: isLoadingIncomes, addIncome, updateIncome, deleteIncome, markIncomeReceived } = useIncomes();
-  const { templates } = useBillTemplatesSecure();
+  const { recurringBills } = useRecurringBills();
 
   // Convert database Bill to legacy Bill format for components
   const convertToLegacyBill = (dbBill: DBBill): LegacyBill => ({
@@ -123,7 +123,7 @@ const Index = () => {
     }
   };
 
-  const handleCreateBillFromTemplate = async (template: BillTemplate) => {
+  const handleCreateBillFromRecurringBill = async (recurringBill: RecurringBill) => {
     // Helper to compute due date based on template.due_day
     const computeDueDate = (due_day?: number | null): string => {
       const now = new Date();
@@ -146,10 +146,10 @@ const Index = () => {
     };
 
     try {
-      if (template.amount == null) {
+      if (recurringBill.amount == null) {
         toast({
-          title: "Template missing amount",
-          description: "Please add an amount to this template or use Add Bill to set it.",
+          title: "Recurring bill missing amount",
+          description: "Please add an amount to this recurring bill or use Add Bill to set it.",
           variant: "destructive",
         });
         // Just show message, don't open form
@@ -157,20 +157,20 @@ const Index = () => {
       }
 
       const newBill: Omit<DBBill, 'id' | 'created_at' | 'updated_at' | 'user_id'> = {
-        name: template.name,
-        amount: template.amount,
-        category: template.category,
-        due_date: computeDueDate(template.due_day ?? undefined),
+        name: recurringBill.name,
+        amount: recurringBill.amount,
+        category: recurringBill.category,
+        due_date: computeDueDate(recurringBill.due_day ?? undefined),
         is_paid: false,
         is_archived: false,
       };
 
-      console.log('Creating bill from template:', template, '->', newBill);
+      console.log('Creating bill from recurring bill:', recurringBill, '->', newBill);
       await addBill(newBill);
-      toast({ title: 'Bill created', description: `${template.name} scheduled for ${newBill.due_date}.` });
+      toast({ title: 'Bill created', description: `${recurringBill.name} scheduled for ${newBill.due_date}.` });
     } catch (error) {
-      console.error('Error creating bill from template:', error);
-      toast({ title: 'Error', description: 'Failed to create bill from template.', variant: 'destructive' });
+      console.error('Error creating bill from recurring bill:', error);
+      toast({ title: 'Error', description: 'Failed to create bill from recurring bill.', variant: 'destructive' });
     }
   };
 
@@ -394,7 +394,7 @@ const Index = () => {
               
               <Button 
                 onClick={() => {
-                  setShowAddTemplateForm(!showAddTemplateForm);
+                  setShowAddRecurringBillForm(!showAddRecurringBillForm);
                 }}
                 className="gap-2 w-full md:w-auto"
               >
@@ -422,13 +422,13 @@ const Index = () => {
           </Dialog>
 
           {/* Add Bill Dialog */}
-          <Dialog open={showAddTemplateForm} onOpenChange={setShowAddTemplateForm}>
+          <Dialog open={showAddRecurringBillForm} onOpenChange={setShowAddRecurringBillForm}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add Bill</DialogTitle>
               </DialogHeader>
-              <AddTemplateForm
-                onCancel={() => setShowAddTemplateForm(false)}
+              <AddRecurringBillForm
+                onCancel={() => setShowAddRecurringBillForm(false)}
               />
             </DialogContent>
           </Dialog>
@@ -445,7 +445,7 @@ const Index = () => {
               <BillsDashboard 
                 bills={bills}
                 incomes={incomes}
-                templates={templates}
+                recurringBills={recurringBills}
                 onEditBill={(bill) => {
                   setEditingBill(bill);
                   setShowEditBillForm(true);
@@ -563,9 +563,9 @@ const Index = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="templates">
-          <BillTemplatesTab onCreateBillFromTemplate={handleCreateBillFromTemplate} />
-        </TabsContent>
+            <TabsContent value="templates">
+              <RecurringBillsTab onCreateBillFromRecurringBill={handleCreateBillFromRecurringBill} />
+            </TabsContent>
       </Tabs>
 
           {/* Duplication Dialog */}

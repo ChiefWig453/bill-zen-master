@@ -1,4 +1,4 @@
-export interface BillTemplate {
+export interface RecurringBill {
   id: string;
   name: string;
   amount?: number;
@@ -8,7 +8,7 @@ export interface BillTemplate {
   updated_at: string;
 }
 
-export const TEMPLATE_CATEGORIES = [
+export const RECURRING_BILL_CATEGORIES = [
   'Utilities',
   'Rent/Mortgage', 
   'Insurance',
@@ -19,4 +19,4 @@ export const TEMPLATE_CATEGORIES = [
   'Other'
 ] as const;
 
-export type TemplateCategory = typeof TEMPLATE_CATEGORIES[number];
+export type RecurringBillCategory = typeof RECURRING_BILL_CATEGORIES[number];

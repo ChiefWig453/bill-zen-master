@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-export interface BillTemplate {
+export interface RecurringBill {
   id: string;
   name: string;
   amount?: number;
@@ -13,16 +13,16 @@ export interface BillTemplate {
   updated_at: string;
 }
 
-export const useBillTemplatesSecure = () => {
-  const [templates, setTemplates] = useState<BillTemplate[]>([]);
+export const useRecurringBills = () => {
+  const [recurringBills, setRecurringBills] = useState<RecurringBill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Fetch templates from database
-  const fetchTemplates = async () => {
+  // Fetch recurring bills from database
+  const fetchRecurringBills = async () => {
     if (!user) {
-      setTemplates([]);
+      setRecurringBills([]);
       setIsLoading(false);
       return;
     }
@@ -34,21 +34,21 @@ export const useBillTemplatesSecure = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching templates:', error);
+        console.error('Error fetching recurring bills:', error);
         toast({
           title: "Error",
-          description: "Failed to load templates",
+          description: "Failed to load recurring bills",
           variant: "destructive",
         });
         return;
       }
 
-      setTemplates(data || []);
+      setRecurringBills(data || []);
     } catch (error) {
-      console.error('Error fetching templates:', error);
+      console.error('Error fetching recurring bills:', error);
       toast({
         title: "Error",
-        description: "Failed to load templates",
+        description: "Failed to load recurring bills",
         variant: "destructive",
       });
     } finally {
@@ -56,9 +56,9 @@ export const useBillTemplatesSecure = () => {
     }
   };
 
-  // Load templates when user changes
+  // Load recurring bills when user changes
   useEffect(() => {
-    fetchTemplates();
+    fetchRecurringBills();
   }, [user]);
 
   // Migrate existing localStorage templates to database (one-time migration)
@@ -86,7 +86,7 @@ export const useBillTemplatesSecure = () => {
         .insert(templatesToInsert);
 
       if (error) {
-        console.error('Error migrating templates:', error);
+        console.error('Error migrating recurring bills:', error);
         return;
       }
 
@@ -94,12 +94,12 @@ export const useBillTemplatesSecure = () => {
       localStorage.removeItem('billTemplates');
       
       toast({
-        title: "Templates migrated",
-        description: `${localTemplates.length} templates have been migrated to secure storage.`,
+        title: "Recurring bills migrated",
+        description: `${localTemplates.length} recurring bills have been migrated to secure storage.`,
       });
 
-      // Refresh templates
-      fetchTemplates();
+      // Refresh recurring bills
+      fetchRecurringBills();
     } catch (error) {
       console.error('Error during migration:', error);
     }
@@ -114,7 +114,7 @@ export const useBillTemplatesSecure = () => {
 
   const validateInput = (name: string, amount?: number, category?: string) => {
     if (!name || name.trim().length === 0 || name.length > 255) {
-      throw new Error('Template name must be between 1 and 255 characters');
+      throw new Error('Recurring bill name must be between 1 and 255 characters');
     }
     
     if (amount !== undefined && (amount < 0 || amount > 999999.99)) {
@@ -126,11 +126,11 @@ export const useBillTemplatesSecure = () => {
     }
   };
 
-  const addTemplate = async (templateData: Omit<BillTemplate, 'id' | 'created_at' | 'updated_at'>) => {
+  const addRecurringBill = async (recurringBillData: Omit<RecurringBill, 'id' | 'created_at' | 'updated_at'>) => {
     if (!user) {
       toast({
         title: "Authentication required",
-        description: "Please log in to add templates",
+        description: "Please log in to add recurring bills",
         variant: "destructive",
       });
       return null;
@@ -138,40 +138,40 @@ export const useBillTemplatesSecure = () => {
 
     try {
       // Validate input
-      validateInput(templateData.name, templateData.amount, templateData.category);
+      validateInput(recurringBillData.name, recurringBillData.amount, recurringBillData.category);
 
       const { data, error } = await supabase
         .from('bill_templates')
         .insert([{
           user_id: user.id,
-          name: templateData.name.trim(),
-          amount: templateData.amount,
-          category: templateData.category.trim(),
-          due_day: templateData.due_day,
+          name: recurringBillData.name.trim(),
+          amount: recurringBillData.amount,
+          category: recurringBillData.category.trim(),
+          due_day: recurringBillData.due_day,
         }])
         .select()
         .single();
 
       if (error) {
-        console.error('Error adding template:', error);
+        console.error('Error adding recurring bill:', error);
         toast({
           title: "Error",
-          description: "Failed to add template",
+          description: "Failed to add recurring bill",
           variant: "destructive",
         });
         return null;
       }
 
-      setTemplates(prev => [data, ...prev]);
+      setRecurringBills(prev => [data, ...prev]);
       
       toast({
-        title: "Template added",
-        description: `${data.name} template has been created.`,
+        title: "Recurring bill added",
+        description: `${data.name} has been created.`,
       });
       
       return data;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to add template';
+      const message = error instanceof Error ? error.message : 'Failed to add recurring bill';
       toast({
         title: "Validation Error",
         description: message,
@@ -181,11 +181,11 @@ export const useBillTemplatesSecure = () => {
     }
   };
 
-  const updateTemplate = async (id: string, updates: Partial<BillTemplate>) => {
+  const updateRecurringBill = async (id: string, updates: Partial<RecurringBill>) => {
     if (!user) {
       toast({
         title: "Authentication required",
-        description: "Please log in to update templates",
+        description: "Please log in to update recurring bills",
         variant: "destructive",
       });
       return;
@@ -194,11 +194,11 @@ export const useBillTemplatesSecure = () => {
     try {
       // Validate input if being updated
       if (updates.name !== undefined || updates.amount !== undefined || updates.category !== undefined) {
-        const currentTemplate = templates.find(t => t.id === id);
+        const currentRecurringBill = recurringBills.find(t => t.id === id);
         validateInput(
-          updates.name ?? currentTemplate?.name ?? '',
+          updates.name ?? currentRecurringBill?.name ?? '',
           updates.amount,
-          updates.category ?? currentTemplate?.category
+          updates.category ?? currentRecurringBill?.category
         );
       }
 
@@ -215,25 +215,25 @@ export const useBillTemplatesSecure = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error updating template:', error);
+        console.error('Error updating recurring bill:', error);
         toast({
           title: "Error",
-          description: "Failed to update template",
+          description: "Failed to update recurring bill",
           variant: "destructive",
         });
         return;
       }
 
-      setTemplates(prev => prev.map(template => 
-        template.id === id ? { ...template, ...cleanUpdates } : template
+      setRecurringBills(prev => prev.map(recurringBill => 
+        recurringBill.id === id ? { ...recurringBill, ...cleanUpdates } : recurringBill
       ));
       
       toast({
-        title: "Template updated",
-        description: "Template has been successfully updated.",
+        title: "Recurring bill updated",
+        description: "Recurring bill has been successfully updated.",
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update template';
+      const message = error instanceof Error ? error.message : 'Failed to update recurring bill';
       toast({
         title: "Validation Error",
         description: message,
@@ -242,17 +242,17 @@ export const useBillTemplatesSecure = () => {
     }
   };
 
-  const deleteTemplate = async (id: string) => {
+  const deleteRecurringBill = async (id: string) => {
     if (!user) {
       toast({
         title: "Authentication required",
-        description: "Please log in to delete templates",
+        description: "Please log in to delete recurring bills",
         variant: "destructive",
       });
       return;
     }
 
-    const templateToDelete = templates.find(template => template.id === id);
+    const recurringBillToDelete = recurringBills.find(recurringBill => recurringBill.id === id);
     
     try {
       const { error } = await supabase
@@ -261,36 +261,36 @@ export const useBillTemplatesSecure = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error deleting template:', error);
+        console.error('Error deleting recurring bill:', error);
         toast({
           title: "Error",
-          description: "Failed to delete template",
+          description: "Failed to delete recurring bill",
           variant: "destructive",
         });
         return;
       }
 
-      setTemplates(prev => prev.filter(template => template.id !== id));
+      setRecurringBills(prev => prev.filter(recurringBill => recurringBill.id !== id));
       
       toast({
-        title: "Template deleted",
-        description: `${templateToDelete?.name} template has been deleted.`,
+        title: "Recurring bill deleted",
+        description: `${recurringBillToDelete?.name} has been deleted.`,
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete template",
+        description: "Failed to delete recurring bill",
         variant: "destructive",
       });
     }
   };
 
   return {
-    templates,
+    recurringBills,
     isLoading,
-    addTemplate,
-    updateTemplate,
-    deleteTemplate,
-    fetchTemplates
+    addRecurringBill,
+    updateRecurringBill,
+    deleteRecurringBill,
+    fetchRecurringBills
   };
 };

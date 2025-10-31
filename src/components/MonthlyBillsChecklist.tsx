@@ -5,17 +5,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { BillTemplate } from '@/hooks/useBillTemplatesSecure';
+import { RecurringBill } from '@/hooks/useRecurringBills';
 import { Bill } from '@/hooks/useBills';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface MonthlyBillsChecklistProps {
-  templates: BillTemplate[];
+  recurringBills: RecurringBill[];
   bills: Bill[];
   onBillUpdated?: () => void;
 }
 
-export const MonthlyBillsChecklist = ({ templates, bills, onBillUpdated }: MonthlyBillsChecklistProps) => {
+export const MonthlyBillsChecklist = ({ recurringBills, bills, onBillUpdated }: MonthlyBillsChecklistProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
@@ -25,29 +25,29 @@ export const MonthlyBillsChecklist = ({ templates, bills, onBillUpdated }: Month
   const monthEnd = endOfMonth(currentDate);
   const currentMonth = format(currentDate, 'MMMM yyyy');
 
-  // Check if a template has been paid this month
-  const isTemplatePaid = (template: BillTemplate): boolean => {
+  // Check if a recurring bill has been paid this month
+  const isRecurringBillPaid = (recurringBill: RecurringBill): boolean => {
     return bills.some(bill => {
       const billDate = parseISO(bill.due_date);
       const isSameMonth = billDate >= monthStart && billDate <= monthEnd;
-      const matchesTemplate = 
-        bill.name === template.name && 
-        bill.category === template.category &&
+      const matchesRecurringBill = 
+        bill.name === recurringBill.name && 
+        bill.category === recurringBill.category &&
         bill.is_paid;
       
-      return isSameMonth && matchesTemplate;
+      return isSameMonth && matchesRecurringBill;
     });
   };
 
-  const handleCheckboxChange = async (template: BillTemplate, isChecked: boolean) => {
+  const handleCheckboxChange = async (recurringBill: RecurringBill, isChecked: boolean) => {
     if (!user) return;
     
-    setProcessingIds(prev => new Set(prev).add(template.id));
+    setProcessingIds(prev => new Set(prev).add(recurringBill.id));
 
     try {
       if (isChecked) {
-        // Create a new paid bill for this template
-        const dueDay = template.due_day || 1;
+        // Create a new paid bill for this recurring bill
+        const dueDay = recurringBill.due_day || 1;
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         const dueDate = new Date(year, month, Math.min(dueDay, new Date(year, month + 1, 0).getDate()));
@@ -56,10 +56,10 @@ export const MonthlyBillsChecklist = ({ templates, bills, onBillUpdated }: Month
           .from('bills')
           .insert({
             user_id: user.id,
-            name: template.name,
-            amount: template.amount || 0,
+            name: recurringBill.name,
+            amount: recurringBill.amount || 0,
             due_date: format(dueDate, 'yyyy-MM-dd'),
-            category: template.category,
+            category: recurringBill.category,
             is_paid: true,
             is_archived: false,
           });
@@ -68,19 +68,19 @@ export const MonthlyBillsChecklist = ({ templates, bills, onBillUpdated }: Month
 
         toast({
           title: "Bill marked as paid",
-          description: `${template.name} has been marked as paid for ${currentMonth}.`,
+          description: `${recurringBill.name} has been marked as paid for ${currentMonth}.`,
         });
       } else {
-        // Find and delete the paid bill for this template in current month
+        // Find and delete the paid bill for this recurring bill in current month
         const billToDelete = bills.find(bill => {
           const billDate = parseISO(bill.due_date);
           const isSameMonth = billDate >= monthStart && billDate <= monthEnd;
-          const matchesTemplate = 
-            bill.name === template.name && 
-            bill.category === template.category &&
+          const matchesRecurringBill = 
+            bill.name === recurringBill.name && 
+            bill.category === recurringBill.category &&
             bill.is_paid;
           
-          return isSameMonth && matchesTemplate;
+          return isSameMonth && matchesRecurringBill;
         });
 
         if (billToDelete) {
@@ -93,7 +93,7 @@ export const MonthlyBillsChecklist = ({ templates, bills, onBillUpdated }: Month
 
           toast({
             title: "Bill unmarked",
-            description: `${template.name} has been unmarked for ${currentMonth}.`,
+            description: `${recurringBill.name} has been unmarked for ${currentMonth}.`,
           });
         }
       }
@@ -109,13 +109,13 @@ export const MonthlyBillsChecklist = ({ templates, bills, onBillUpdated }: Month
     } finally {
       setProcessingIds(prev => {
         const newSet = new Set(prev);
-        newSet.delete(template.id);
+        newSet.delete(recurringBill.id);
         return newSet;
       });
     }
   };
 
-  if (templates.length === 0) {
+  if (recurringBills.length === 0) {
     return null;
   }
 
@@ -127,34 +127,34 @@ export const MonthlyBillsChecklist = ({ templates, bills, onBillUpdated }: Month
       <CardContent className="px-3 sm:px-6">
         <ScrollArea className="h-[300px] sm:h-[400px] pr-2 sm:pr-4">
           <div className="space-y-2 sm:space-y-3">
-            {templates.map((template) => {
-              const isPaid = isTemplatePaid(template);
-              const isProcessing = processingIds.has(template.id);
+            {recurringBills.map((recurringBill) => {
+              const isPaid = isRecurringBillPaid(recurringBill);
+              const isProcessing = processingIds.has(recurringBill.id);
 
               return (
                 <div
-                  key={template.id}
+                  key={recurringBill.id}
                   className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                 >
                   <Checkbox
-                    id={`checklist-${template.id}`}
+                    id={`checklist-${recurringBill.id}`}
                     checked={isPaid}
-                    onCheckedChange={(checked) => handleCheckboxChange(template, checked as boolean)}
+                    onCheckedChange={(checked) => handleCheckboxChange(recurringBill, checked as boolean)}
                     disabled={isProcessing}
                   />
                   <label
-                    htmlFor={`checklist-${template.id}`}
+                    htmlFor={`checklist-${recurringBill.id}`}
                     className="flex-1 cursor-pointer"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                       <div className="min-w-0 flex-1">
                         <p className={`font-medium text-sm sm:text-base truncate ${isPaid ? 'line-through text-muted-foreground' : ''}`}>
-                          {template.name}
+                          {recurringBill.name}
                         </p>
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                          {template.category}
-                          {template.amount && ` • $${template.amount.toFixed(2)}`}
-                          {template.due_day && ` • ${template.due_day}${getDaySuffix(template.due_day)}`}
+                          {recurringBill.category}
+                          {recurringBill.amount && ` • $${recurringBill.amount.toFixed(2)}`}
+                          {recurringBill.due_day && ` • ${recurringBill.due_day}${getDaySuffix(recurringBill.due_day)}`}
                         </p>
                       </div>
                     </div>

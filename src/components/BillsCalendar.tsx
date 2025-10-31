@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Bill } from '@/hooks/useBills';
 import { Income } from '@/types/income';
-import { BillTemplate } from '@/hooks/useBillTemplatesSecure';
+import { RecurringBill } from '@/hooks/useRecurringBills';
 import { format, isSameDay, isBefore, parseISO, startOfMonth, endOfMonth, addMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import {
@@ -20,15 +20,15 @@ import { Pencil } from 'lucide-react';
 interface BillsCalendarProps {
   bills: Bill[];
   incomes: Income[];
-  templates: BillTemplate[];
+  recurringBills: RecurringBill[];
   onEditBill?: (bill: Bill) => void;
   onEditIncome?: (income: Income) => void;
 }
 
-export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditIncome }: BillsCalendarProps) => {
+export const BillsCalendar = ({ bills, incomes, recurringBills, onEditBill, onEditIncome }: BillsCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<{ bills: Bill[], incomes: Income[], templates: BillTemplate[] }>({ bills: [], incomes: [], templates: [] });
+  const [selectedItems, setSelectedItems] = useState<{ bills: Bill[], incomes: Income[], recurringBills: RecurringBill[] }>({ bills: [], incomes: [], recurringBills: [] });
 
   const now = new Date();
 
@@ -43,21 +43,21 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
     });
   };
 
-  const getTemplatesForDate = (date: Date) => {
+  const getRecurringBillsForDate = (date: Date) => {
     const day = date.getDate();
-    return templates.filter(template => {
-      // Match templates that have this due_day
-      if (!template.due_day) return false;
+    return recurringBills.filter(recurringBill => {
+      // Match recurring bills that have this due_day
+      if (!recurringBill.due_day) return false;
       
-      // Check if this template already has a bill created for this date
+      // Check if this recurring bill already has a bill created for this date
       const hasExistingBill = bills.some(bill => 
         isSameDay(parseISO(bill.due_date), date) &&
-        bill.name === template.name &&
-        bill.category === template.category
+        bill.name === recurringBill.name &&
+        bill.category === recurringBill.category
       );
       
-      // Only show template if no bill exists for this date
-      return template.due_day === day && !hasExistingBill;
+      // Only show recurring bill if no bill exists for this date
+      return recurringBill.due_day === day && !hasExistingBill;
     });
   };
 
@@ -66,22 +66,22 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
     if (date) {
       const dateBills = getBillsForDate(date);
       const dateIncomes = getIncomesForDate(date);
-      const dateTemplates = getTemplatesForDate(date);
+      const dateRecurringBills = getRecurringBillsForDate(date);
       
-      if (dateBills.length > 0 || dateIncomes.length > 0 || dateTemplates.length > 0) {
-        setSelectedItems({ bills: dateBills, incomes: dateIncomes, templates: dateTemplates });
+      if (dateBills.length > 0 || dateIncomes.length > 0 || dateRecurringBills.length > 0) {
+        setSelectedItems({ bills: dateBills, incomes: dateIncomes, recurringBills: dateRecurringBills });
         setShowDetailsDialog(true);
       }
     }
   };
 
   const modifiers = {
-    hasTemplates: (date: Date) => getTemplatesForDate(date).length > 0,
+    hasRecurringBills: (date: Date) => getRecurringBillsForDate(date).length > 0,
     hasIncome: (date: Date) => getIncomesForDate(date).length > 0,
   };
 
   const modifiersClassNames = {
-    hasTemplates: 'bg-purple-100 text-purple-900 hover:bg-purple-200',
+    hasRecurringBills: 'bg-purple-100 text-purple-900 hover:bg-purple-200',
     hasIncome: 'bg-blue-100 text-blue-900 hover:bg-blue-200',
   };
 
@@ -167,19 +167,19 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
               </div>
             )}
 
-            {selectedItems.templates.length > 0 && (
+            {selectedItems.recurringBills.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2 text-sm sm:text-base">Recurring Bills (Not Yet Created)</h4>
                 <div className="space-y-2">
-                  {selectedItems.templates.map(template => (
-                    <div key={template.id} className="flex items-start justify-between p-2 sm:p-3 border rounded-lg bg-purple-50 gap-2">
+                  {selectedItems.recurringBills.map(recurringBill => (
+                    <div key={recurringBill.id} className="flex items-start justify-between p-2 sm:p-3 border rounded-lg bg-purple-50 gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                          <span className="font-medium text-sm truncate">{template.name}</span>
-                          <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs w-fit">Template</Badge>
+                          <span className="font-medium text-sm truncate">{recurringBill.name}</span>
+                          <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs w-fit">Recurring</Badge>
                         </div>
                         <div className="text-xs sm:text-sm text-muted-foreground truncate">
-                          {template.amount ? `$${Number(template.amount).toFixed(2)} • ` : ''}{template.category}
+                          {recurringBill.amount ? `$${Number(recurringBill.amount).toFixed(2)} • ` : ''}{recurringBill.category}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
                           Use the checklist to mark as paid for this month
