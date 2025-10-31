@@ -374,9 +374,6 @@ const Index = () => {
           {/* Notifications */}
           <NotificationBanner bills={legacyBills} />
 
-          {/* Stats */}
-          <BillStats bills={legacyBills} incomes={incomes} />
-
           {/* Income Stats */}
           <IncomeStats incomes={incomes} />
 
