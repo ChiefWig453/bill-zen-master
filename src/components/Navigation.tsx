@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Receipt, Users, LogOut, Truck, Settings, Wrench, Menu, Globe } from 'lucide-react';
+import { Receipt, Users, LogOut, Truck, Settings, Wrench, Menu, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
@@ -91,7 +91,7 @@ export const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="p-2 bg-primary/10 rounded-lg">
-              <Globe className="h-5 w-5 text-primary" />
+              <Home className="h-5 w-5 text-primary" />
             </div>
           </div>
           
