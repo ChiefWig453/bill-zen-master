@@ -438,10 +438,10 @@ const Index = () => {
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="dashboard" className="space-y-6">
-            <TabsList className="w-full md:w-auto grid grid-cols-3 md:inline-flex">
-              <TabsTrigger value="dashboard" className="text-xs md:text-sm">Dashboard</TabsTrigger>
-              <TabsTrigger value="templates" className="text-xs md:text-sm">Recurring Bills</TabsTrigger>
-              <TabsTrigger value="income" className="text-xs md:text-sm">Income</TabsTrigger>
+            <TabsList className="w-full md:w-auto grid grid-cols-3 md:inline-flex md:gap-2">
+              <TabsTrigger value="dashboard" className="text-xs md:text-sm md:px-6">Dashboard</TabsTrigger>
+              <TabsTrigger value="templates" className="text-xs md:text-sm md:px-6">Recurring Bills</TabsTrigger>
+              <TabsTrigger value="income" className="text-xs md:text-sm md:px-6">Income</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dashboard">
