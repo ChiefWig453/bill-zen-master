@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Bill } from '@/hooks/useBills';
 import { Income } from '@/types/income';
-import { format, isSameDay, isBefore, parseISO } from 'date-fns';
+import { BillTemplate } from '@/hooks/useBillTemplatesSecure';
+import { format, isSameDay, isBefore, parseISO, startOfMonth, endOfMonth, addMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
@@ -19,14 +20,15 @@ import { Pencil } from 'lucide-react';
 interface BillsCalendarProps {
   bills: Bill[];
   incomes: Income[];
+  templates: BillTemplate[];
   onEditBill?: (bill: Bill) => void;
   onEditIncome?: (income: Income) => void;
 }
 
-export const BillsCalendar = ({ bills, incomes, onEditBill, onEditIncome }: BillsCalendarProps) => {
+export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditIncome }: BillsCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<{ bills: Bill[], incomes: Income[] }>({ bills: [], incomes: [] });
+  const [selectedItems, setSelectedItems] = useState<{ bills: Bill[], incomes: Income[], templates: BillTemplate[] }>({ bills: [], incomes: [], templates: [] });
 
   const now = new Date();
 
@@ -41,14 +43,33 @@ export const BillsCalendar = ({ bills, incomes, onEditBill, onEditIncome }: Bill
     });
   };
 
+  const getTemplatesForDate = (date: Date) => {
+    const day = date.getDate();
+    return templates.filter(template => {
+      // Match templates that have this due_day
+      if (!template.due_day) return false;
+      
+      // Check if this template already has a bill created for this date
+      const hasExistingBill = bills.some(bill => 
+        isSameDay(parseISO(bill.due_date), date) &&
+        bill.name === template.name &&
+        bill.category === template.category
+      );
+      
+      // Only show template if no bill exists for this date
+      return template.due_day === day && !hasExistingBill;
+    });
+  };
+
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
     if (date) {
       const dateBills = getBillsForDate(date);
       const dateIncomes = getIncomesForDate(date);
+      const dateTemplates = getTemplatesForDate(date);
       
-      if (dateBills.length > 0 || dateIncomes.length > 0) {
-        setSelectedItems({ bills: dateBills, incomes: dateIncomes });
+      if (dateBills.length > 0 || dateIncomes.length > 0 || dateTemplates.length > 0) {
+        setSelectedItems({ bills: dateBills, incomes: dateIncomes, templates: dateTemplates });
         setShowDetailsDialog(true);
       }
     }
@@ -56,6 +77,7 @@ export const BillsCalendar = ({ bills, incomes, onEditBill, onEditIncome }: Bill
 
   const modifiers = {
     hasBills: (date: Date) => getBillsForDate(date).length > 0,
+    hasTemplates: (date: Date) => getTemplatesForDate(date).length > 0,
     hasIncome: (date: Date) => getIncomesForDate(date).length > 0,
     overdue: (date: Date) => {
       const dateBills = getBillsForDate(date);
@@ -65,6 +87,7 @@ export const BillsCalendar = ({ bills, incomes, onEditBill, onEditIncome }: Bill
 
   const modifiersClassNames = {
     hasBills: 'bg-green-100 text-green-900 hover:bg-green-200',
+    hasTemplates: 'bg-purple-100 text-purple-900 hover:bg-purple-200',
     hasIncome: 'bg-blue-100 text-blue-900 hover:bg-blue-200',
     overdue: 'bg-red-100 text-red-900 hover:bg-red-200',
   };
@@ -90,6 +113,10 @@ export const BillsCalendar = ({ bills, incomes, onEditBill, onEditIncome }: Bill
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-green-100 border border-green-300"></div>
               <span className="text-sm">Upcoming Bills</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-purple-100 border border-purple-300"></div>
+              <span className="text-sm">Recurring Bills</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-red-100 border border-red-300"></div>
@@ -148,6 +175,30 @@ export const BillsCalendar = ({ bills, incomes, onEditBill, onEditIncome }: Bill
                           <Pencil className="h-4 w-4" />
                         </Button>
                       )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedItems.templates.length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-2">Recurring Bills (Not Yet Created)</h4>
+                <div className="space-y-2">
+                  {selectedItems.templates.map(template => (
+                    <div key={template.id} className="flex items-center justify-between p-3 border rounded-lg bg-purple-50">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{template.name}</span>
+                          <Badge variant="secondary" className="bg-purple-100 text-purple-800">Template</Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {template.amount ? `$${Number(template.amount).toFixed(2)} • ` : ''}{template.category}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Use the checklist to mark as paid for this month
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>

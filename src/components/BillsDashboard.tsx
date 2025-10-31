@@ -27,6 +27,7 @@ export const BillsDashboard = ({
         <BillsCalendar 
           bills={bills} 
           incomes={incomes}
+          templates={templates}
           onEditBill={onEditBill}
           onEditIncome={onEditIncome}
         />
