@@ -1,15 +1,10 @@
-import { useState } from 'react';
 import { useBillTemplatesSecure, BillTemplate } from '@/hooks/useBillTemplatesSecure';
-import { Plus, Edit, Trash2, FileText, Calendar } from 'lucide-react';
+import { Plus, Trash2, FileText, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useCategories } from '@/hooks/useCategories';
 
 // Helper function for ordinal suffixes
 const getOrdinalSuffix = (day: number): string => {
@@ -27,65 +22,8 @@ interface BillTemplatesTabProps {
 }
 
 export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabProps) => {
-  const [templateName, setTemplateName] = useState('');
-  const [templateAmount, setTemplateAmount] = useState('');
-  const [templateCategory, setTemplateCategory] = useState('');
-  const [templateDueDay, setTemplateDueDay] = useState('');
-  const [editingTemplate, setEditingTemplate] = useState<BillTemplate | null>(null);
-  
-  const { templates, isLoading, addTemplate, updateTemplate, deleteTemplate } = useBillTemplatesSecure();
+  const { templates, isLoading, deleteTemplate } = useBillTemplatesSecure();
   const { toast } = useToast();
-  const { allCategories } = useCategories();
-
-  const resetForm = () => {
-    setTemplateName('');
-    setTemplateAmount('');
-    setTemplateCategory('');
-    setTemplateDueDay('');
-    setEditingTemplate(null);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!templateName?.trim() || !templateCategory?.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const templateData = {
-      name: templateName.trim(),
-      amount: templateAmount ? parseFloat(templateAmount) : undefined,
-      category: templateCategory.trim(),
-      due_day: templateDueDay ? parseInt(templateDueDay) : undefined
-    };
-
-    let success = false;
-    if (editingTemplate) {
-      await updateTemplate(editingTemplate.id, templateData);
-      setEditingTemplate(null);
-      success = true;
-    } else {
-      const result = await addTemplate(templateData);
-      success = result !== null;
-    }
-
-    if (success) {
-      resetForm();
-    }
-  };
-
-  const handleEdit = (template: BillTemplate) => {
-    setTemplateName(template.name);
-    setTemplateAmount(template.amount?.toString() || '');
-    setTemplateCategory(template.category);
-    setTemplateDueDay(template.due_day?.toString() || '');
-    setEditingTemplate(template);
-  };
 
   const handleCreateBill = (template: BillTemplate) => {
     onCreateBillFromTemplate(template);
@@ -118,152 +56,7 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${editingTemplate ? 'text-primary' : ''}`}>
-            <FileText className="h-5 w-5" />
-            {editingTemplate ? `Edit Template: ${editingTemplate.name}` : 'Add New Template'}
-          </CardTitle>
-          {editingTemplate && (
-            <p className="text-sm text-muted-foreground">
-              Editing template created on {new Date(editingTemplate.created_at).toLocaleDateString()}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent className="pt-6">
-        <div className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="templateName" className="text-sm font-medium">
-                  Template Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="templateName"
-                  type="text"
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  placeholder="e.g., Electricity Bill, Monthly Rent"
-                  maxLength={255}
-                  required
-                  autoFocus={editingTemplate !== null}
-                  className={`${templateName.trim() === '' && editingTemplate ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Give your template a descriptive name for easy identification
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="templateAmount" className="text-sm font-medium">
-                  Default Amount <span className="text-xs text-muted-foreground">(optional)</span>
-                </Label>
-                <Input
-                  id="templateAmount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="999999.99"
-                  value={templateAmount}
-                  onChange={(e) => setTemplateAmount(e.target.value)}
-                  placeholder="0.00"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {templateAmount ? 'Ready for quick bill creation' : 'Leave empty to set amount when creating bill'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="templateCategory" className="text-sm font-medium">
-                  Category <span className="text-destructive">*</span>
-                </Label>
-                <Select value={templateCategory} onValueChange={setTemplateCategory} required>
-                  <SelectTrigger className={`${!templateCategory.trim() && editingTemplate ? 'border-destructive' : ''}`}>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent className="z-50 bg-background border shadow-md">
-                    {allCategories.map((category) => (
-                      <SelectItem key={category} value={category} className="cursor-pointer">
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Choose the bill category for organization
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="templateDueDay" className="text-sm font-medium">
-                  Due Day <span className="text-xs text-muted-foreground">(1-31, optional)</span>
-                </Label>
-                <Input
-                  id="templateDueDay"
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={templateDueDay}
-                  onChange={(e) => setTemplateDueDay(e.target.value)}
-                  placeholder="e.g., 15 for 15th of month"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {templateDueDay ? `Bills will be due on the ${templateDueDay}${getOrdinalSuffix(parseInt(templateDueDay))} of each month` : 'Auto-schedule bills for specific day of month'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
-              <Button 
-                type="submit" 
-                disabled={isLoading || !templateName.trim() || !templateCategory.trim()}
-                className={`flex-1 sm:flex-none ${editingTemplate ? 'bg-primary hover:bg-primary/90' : ''}`}
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {editingTemplate ? 'Updating...' : 'Adding...'}
-                  </>
-                ) : (
-                  <>
-                    {editingTemplate ? 'Update Template' : 'Add Template'}
-                  </>
-                )}
-              </Button>
-              
-              {editingTemplate && (
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    resetForm();
-                    toast({
-                      title: "Edit cancelled",
-                      description: "Template editing has been cancelled.",
-                    });
-                  }}
-                  className="flex-1 sm:flex-none"
-                >
-                  Cancel Edit
-                </Button>
-              )}
-              
-              {!editingTemplate && templates.length > 0 && (
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  onClick={() => resetForm()}
-                  className="flex-1 sm:flex-none"
-                >
-                  Clear Form
-                </Button>
-              )}
-            </div>
-          </form>
-
-          {isLoading ? (
+      {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
               <div className="relative">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -282,19 +75,8 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
               <div className="text-center space-y-2 max-w-md">
                 <h3 className="text-lg font-semibold">No templates yet</h3>
                 <p className="text-muted-foreground">
-                  Templates save you time by pre-filling bill information. Create your first template above to get started with faster bill management.
+                  You don't have any bill templates saved. Templates will appear here once created.
                 </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Plus className="h-4 w-4" />
-                  Fill out the form above
-                </span>
-                <span className="hidden sm:inline">•</span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  Quick-create bills later
-                </span>
               </div>
             </div>
           ) : (
@@ -347,16 +129,6 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                         </TableCell>
                         <TableCell className="py-4">
                           <div className="flex items-center justify-center gap-1">
-                            <Button
-                              size="sm" 
-                              variant="ghost"
-                              onClick={() => handleEdit(template)}
-                              title={`Edit ${template.name} template`}
-                              className="h-7 w-7 p-0"
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            
                             <Button 
                               size="sm" 
                               variant="ghost"
@@ -392,14 +164,6 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                             </p>
                           </div>
                           <div className="flex gap-1 shrink-0">
-                            <Button
-                              size="sm" 
-                              variant="ghost"
-                              onClick={() => handleEdit(template)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
                             <Button 
                               size="sm" 
                               variant="ghost"
@@ -521,11 +285,11 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                       </div>
                       <div className="flex items-start gap-2">
                         <span className="w-1 h-1 rounded-full bg-primary mt-2 flex-shrink-0"></span>
-                        <span>Edit templates anytime to update future bills</span>
+                        <span>Use consistent categories for better tracking</span>
                       </div>
                       <div className="flex items-start gap-2">
                         <span className="w-1 h-1 rounded-full bg-primary mt-2 flex-shrink-0"></span>
-                        <span>Use consistent categories for better tracking</span>
+                        <span>Track monthly totals across all your templates</span>
                       </div>
                     </div>
                   </div>
@@ -533,9 +297,6 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
               </div>
             </>
           )}
-        </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
