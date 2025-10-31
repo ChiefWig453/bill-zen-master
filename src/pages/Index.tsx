@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AddBillForm } from '@/components/AddBillForm';
 import { AddTemplateForm } from '@/components/AddTemplateForm';
 import { BillCard } from '@/components/BillCard';
@@ -403,38 +404,34 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Add Template Form */}
-          {showAddTemplateForm && (
-            <AddTemplateForm
-              onCancel={() => setShowAddTemplateForm(false)}
-            />
-          )}
+          {/* Add Income Dialog */}
+          <Dialog open={showAddIncomeForm} onOpenChange={setShowAddIncomeForm}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingIncome ? 'Edit Income' : 'Add Income'}</DialogTitle>
+              </DialogHeader>
+              <AddIncomeForm
+                onAddIncome={handleAddIncome}
+                editingIncome={editingIncome}
+                onCancel={() => {
+                  setShowAddIncomeForm(false);
+                  setEditingIncome(null);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
 
-          {/* Edit Bill Form */}
-          {showEditBillForm && editingBill && (
-            <AddBillForm
-              onAddBill={handleAddBill}
-              editingBill={convertToLegacyBill(editingBill)}
-              onCancelEdit={() => {
-                setEditingBill(null);
-                setShowEditBillForm(false);
-              }}
-              onCancelAdd={() => {
-                setShowEditBillForm(false);
-              }}
-            />
-          )}
-
-          {showAddIncomeForm && (
-            <AddIncomeForm
-              onAddIncome={handleAddIncome}
-              editingIncome={editingIncome}
-              onCancel={() => {
-                setShowAddIncomeForm(false);
-                setEditingIncome(null);
-              }}
-            />
-          )}
+          {/* Add Bill Dialog */}
+          <Dialog open={showAddTemplateForm} onOpenChange={setShowAddTemplateForm}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add Bill</DialogTitle>
+              </DialogHeader>
+              <AddTemplateForm
+                onCancel={() => setShowAddTemplateForm(false)}
+              />
+            </DialogContent>
+          </Dialog>
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="dashboard" className="space-y-6">
