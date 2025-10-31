@@ -76,20 +76,13 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
   };
 
   const modifiers = {
-    hasBills: (date: Date) => getBillsForDate(date).length > 0,
     hasTemplates: (date: Date) => getTemplatesForDate(date).length > 0,
     hasIncome: (date: Date) => getIncomesForDate(date).length > 0,
-    overdue: (date: Date) => {
-      const dateBills = getBillsForDate(date);
-      return dateBills.some(bill => !bill.is_paid && isBefore(parseISO(bill.due_date), now));
-    },
   };
 
   const modifiersClassNames = {
-    hasBills: 'bg-green-100 text-green-900 hover:bg-green-200',
     hasTemplates: 'bg-purple-100 text-purple-900 hover:bg-purple-200',
     hasIncome: 'bg-blue-100 text-blue-900 hover:bg-blue-200',
-    overdue: 'bg-red-100 text-red-900 hover:bg-red-200',
   };
 
   return (
@@ -111,16 +104,8 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
           </div>
           <div className="flex gap-4 mt-4 justify-center flex-wrap">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-green-100 border border-green-300"></div>
-              <span className="text-sm">Upcoming Bills</span>
-            </div>
-            <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-purple-100 border border-purple-300"></div>
               <span className="text-sm">Recurring Bills</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-red-100 border border-red-300"></div>
-              <span className="text-sm">Overdue Bills</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-blue-100 border border-blue-300"></div>
