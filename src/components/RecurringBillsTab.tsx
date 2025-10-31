@@ -267,33 +267,6 @@ export const RecurringBillsTab = ({ onCreateBillFromRecurringBill }: RecurringBi
                     </p>
                   </div>
                 </div>
-                
-                {recurringBills.length > 0 && (
-                  <div className="mt-6 p-4 bg-muted/20 rounded-lg">
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Pro Tips
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
-                      <div className="flex items-start gap-2">
-                        <span className="w-1 h-1 rounded-full bg-primary mt-2 flex-shrink-0"></span>
-                        <span>Recurring bills with amounts enable one-click bill creation</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="w-1 h-1 rounded-full bg-primary mt-2 flex-shrink-0"></span>
-                        <span>Set due days to auto-schedule recurring bills</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="w-1 h-1 rounded-full bg-primary mt-2 flex-shrink-0"></span>
-                        <span>Use consistent categories for better tracking</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="w-1 h-1 rounded-full bg-primary mt-2 flex-shrink-0"></span>
-                        <span>Track monthly totals across all your recurring bills</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </>
           )}
