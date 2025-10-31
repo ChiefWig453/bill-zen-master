@@ -463,66 +463,67 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="income">
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Enhanced Income Header */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                  <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md">
-                    <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  Income Management
-                </h2>
-                <p className="text-muted-foreground">
-                  Track all your income sources for better financial planning and budgeting
-                </p>
-                {incomes.length > 0 && (
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="inline-flex items-center gap-1 text-muted-foreground">
-                      <DollarSign className="h-4 w-4" />
-                      {incomes.length} income source{incomes.length !== 1 ? 's' : ''}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-muted-foreground">
-                      <Check className="h-4 w-4" />
-                      ${receivedIncomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)} received
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-muted-foreground">
-                      <IncomeCalendarIcon className="h-4 w-4" />
-                      ${pendingIncomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)} pending
-                    </span>
-                  </div>
-                )}
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div className="space-y-2 flex-1">
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md">
+                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    Income Management
+                  </h2>
+                  <p className="text-sm text-muted-foreground hidden sm:block">
+                    Track all your income sources for better financial planning and budgeting
+                  </p>
+                </div>
               </div>
+              
+              {incomes.length > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                  <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                    {incomes.length} source{incomes.length !== 1 ? 's' : ''}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <Check className="h-3 w-3 sm:h-4 sm:w-4" />
+                    ${receivedIncomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)} received
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-muted-foreground">
+                    <IncomeCalendarIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                    ${pendingIncomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)} pending
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Enhanced Income Filter Controls */}
-            <Card className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Filter by Category</Label>
-                    <Select value={incomeFilter} onValueChange={setIncomeFilter}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="All categories" />
-                      </SelectTrigger>
-                      <SelectContent className="z-50 bg-background border shadow-md">
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {INCOME_CATEGORIES.map((category) => (
-                          <SelectItem key={category} value={category} className="cursor-pointer">
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+            <Card className="p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                <div className="flex-1 space-y-2">
+                  <Label className="text-sm font-medium">Filter by Category</Label>
+                  <Select value={incomeFilter} onValueChange={setIncomeFilter}>
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="All categories" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-background border shadow-md">
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {INCOME_CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category} className="cursor-pointer">
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <Button 
                     variant="outline"
                     onClick={() => setIncomeFilter('all')}
                     size="sm"
-                    className="text-xs"
+                    className="text-xs w-full sm:w-auto"
                     disabled={incomeFilter === 'all'}
                   >
                     Clear Filters
@@ -532,10 +533,11 @@ const Index = () => {
                       setShowAddIncomeForm(!showAddIncomeForm);
                       if (editingIncome) setEditingIncome(null);
                     }}
-                    className="gap-2"
+                    className="gap-2 w-full sm:w-auto"
+                    size="sm"
                   >
                     <Plus className="h-4 w-4" />
-                    Add Income
+                    <span className="sm:inline">Add Income</span>
                   </Button>
                 </div>
               </div>

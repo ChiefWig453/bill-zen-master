@@ -58,26 +58,26 @@ export const IncomeTable = ({
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className={`${title.includes('Pending') ? 'bg-yellow-50/50 dark:bg-yellow-950/20' : 'bg-green-50/50 dark:bg-green-950/20'}`}>
-        <CardTitle className="flex items-center justify-between">
+      <CardHeader className={`pb-3 sm:pb-6 ${title.includes('Pending') ? 'bg-yellow-50/50 dark:bg-yellow-950/20' : 'bg-green-50/50 dark:bg-green-950/20'}`}>
+        <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2">
             {icon}
-            <span>{title}</span>
+            <span className="text-base sm:text-lg">{title}</span>
             <Badge 
               variant={title.includes('Pending') ? 'secondary' : 'outline'} 
-              className={`ml-2 ${title.includes('Pending') ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'}`}
+              className={`text-xs ${title.includes('Pending') ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'}`}
             >
               {incomes.length}
             </Badge>
           </div>
           {incomes.length > 0 && (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               Total: ${incomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)}
             </div>
           )}
         </CardTitle>
         {incomes.length > 0 && (
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs sm:text-sm text-muted-foreground">
             {title.includes('Pending') ? 
               `Waiting for ${incomes.length} income source${incomes.length !== 1 ? 's' : ''}` : 
               `Successfully received from ${incomes.length} source${incomes.length !== 1 ? 's' : ''}`
@@ -87,8 +87,10 @@ export const IncomeTable = ({
       </CardHeader>
       <CardContent className="p-0">
         {incomes.length > 0 ? (
-          <div className="overflow-x-auto">
-            <Table>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead className="font-semibold w-[200px]">Income Source</TableHead>
@@ -206,6 +208,112 @@ export const IncomeTable = ({
               </TableBody>
             </Table>
           </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3 p-3">
+            {incomes.map((income) => (
+              <Card key={income.id} className={`overflow-hidden ${!income.is_received ? 'border-l-4 border-l-yellow-400' : ''}`}>
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="font-medium text-base">{income.name}</h3>
+                          {income.is_recurring && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">
+                              <Repeat className="h-3 w-3 mr-1" />
+                              Recurring
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Added {format(new Date(income.created_at), 'MMM dd, yyyy')}
+                        </p>
+                      </div>
+                      {getStatusBadge(income)}
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Amount</p>
+                        <span className={`font-semibold text-xl ${income.is_received ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                          ${income.amount.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground mb-1">Frequency</p>
+                        {getFrequencyBadge(income.frequency)}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <p className="text-muted-foreground mb-1">Category</p>
+                        {getCategoryBadge(income.category)}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-muted-foreground mb-1">Received</p>
+                        <p className="font-medium">
+                          {income.date_received ? formatDateSafely(income.date_received) : 'Not yet'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {income.next_date && (
+                      <div className="text-xs pt-2 border-t">
+                        <p className="text-muted-foreground mb-1">Next Expected</p>
+                        <p className="font-medium">{formatDateSafely(income.next_date)}</p>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2 pt-2 border-t">
+                      <Button 
+                        size="sm" 
+                        variant={income.is_received ? "outline" : "default"}
+                        onClick={() => onToggleReceived(income.id)}
+                        className={`flex-1 gap-1 text-xs h-9 ${!income.is_received ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                      >
+                        {income.is_received ? (
+                          <>
+                            <X className="h-3 w-3" />
+                            Mark Pending
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-3 w-3" />
+                            Mark Received
+                          </>
+                        )}
+                      </Button>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => onEdit(income)}
+                        className="h-9 w-9 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete "${income.name}"? This action cannot be undone.`)) {
+                            onDelete(income.id);
+                          }
+                        }}
+                        className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <div className={`rounded-full p-6 ${title.includes('Pending') ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'bg-green-100 dark:bg-green-900/30'}`}>
