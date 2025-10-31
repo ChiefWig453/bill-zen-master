@@ -88,14 +88,6 @@ export const Navigation = () => {
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Receipt className="h-5 w-5 text-primary" />
-            </div>
-            <span className="font-bold text-base sm:text-lg">Bill Tracker</span>
-          </div>
-          
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks}
