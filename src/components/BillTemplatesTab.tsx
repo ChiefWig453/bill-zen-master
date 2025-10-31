@@ -299,7 +299,7 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
             </div>
           ) : (
             <>
-              {/* Desktop Table View */}
+              {/* Desktop & Tablet Table View */}
               <div className="hidden md:block rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader>

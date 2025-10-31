@@ -355,21 +355,21 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                <Receipt className="h-5 w-5 md:h-6 md:w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold">My Bills</h1>
-                <p className="text-sm text-muted-foreground hidden sm:block">
+                <h1 className="text-2xl md:text-3xl font-bold">My Bills</h1>
+                <p className="text-sm text-muted-foreground hidden md:block">
                   Stay on top of your bills and never miss a payment
                 </p>
               </div>
             </div>
-            <div className="text-left sm:text-right">
+            <div className="text-left md:text-right">
               <p className="text-sm text-muted-foreground">Today</p>
-              <p className="font-medium text-sm sm:text-base">{format(new Date(), 'EEEE, MMM dd')}</p>
+              <p className="font-medium text-sm md:text-base">{format(new Date(), 'EEEE, MMM dd')}</p>
             </div>
           </div>
 
@@ -378,27 +378,27 @@ const Index = () => {
 
           {/* Controls */}
           <div className="flex items-center justify-end">
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
               <Button 
                 variant="outline"
                 onClick={() => {
                   setShowAddIncomeForm(!showAddIncomeForm);
                   if (editingIncome) setEditingIncome(null);
                 }}
-                className="gap-2 w-full sm:w-auto"
+                className="gap-2 w-full md:w-auto"
               >
                 <TrendingUp className="h-4 w-4" />
-                <span className="sm:inline">Add Income</span>
+                Add Income
               </Button>
               
               <Button 
                 onClick={() => {
                   setShowAddTemplateForm(!showAddTemplateForm);
                 }}
-                className="gap-2 w-full sm:w-auto"
+                className="gap-2 w-full md:w-auto"
               >
                 <Plus className="h-4 w-4" />
-                <span className="sm:inline">Add Bill</span>
+                Add Bill
               </Button>
             </div>
           </div>
@@ -438,10 +438,10 @@ const Index = () => {
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="dashboard" className="space-y-6">
-            <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
-              <TabsTrigger value="dashboard" className="text-xs sm:text-sm">Dashboard</TabsTrigger>
-              <TabsTrigger value="templates" className="text-xs sm:text-sm">Recurring</TabsTrigger>
-              <TabsTrigger value="income" className="text-xs sm:text-sm">Income</TabsTrigger>
+            <TabsList className="w-full md:w-auto grid grid-cols-3 md:inline-flex">
+              <TabsTrigger value="dashboard" className="text-xs md:text-sm">Dashboard</TabsTrigger>
+              <TabsTrigger value="templates" className="text-xs md:text-sm">Recurring Bills</TabsTrigger>
+              <TabsTrigger value="income" className="text-xs md:text-sm">Income</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dashboard">
@@ -463,35 +463,35 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="income">
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {/* Enhanced Income Header */}
             <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                 <div className="space-y-2 flex-1">
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
+                  <h2 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
                     <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-md">
-                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400" />
+                      <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-green-600 dark:text-green-400" />
                     </div>
                     Income Management
                   </h2>
-                  <p className="text-sm text-muted-foreground hidden sm:block">
+                  <p className="text-sm text-muted-foreground hidden md:block">
                     Track all your income sources for better financial planning and budgeting
                   </p>
                 </div>
               </div>
               
               {incomes.length > 0 && (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm">
                   <span className="inline-flex items-center gap-1 text-muted-foreground">
-                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <DollarSign className="h-3 w-3 md:h-4 md:w-4" />
                     {incomes.length} source{incomes.length !== 1 ? 's' : ''}
                   </span>
                   <span className="inline-flex items-center gap-1 text-muted-foreground">
-                    <Check className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <Check className="h-3 w-3 md:h-4 md:w-4" />
                     ${receivedIncomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)} received
                   </span>
                   <span className="inline-flex items-center gap-1 text-muted-foreground">
-                    <IncomeCalendarIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <IncomeCalendarIcon className="h-3 w-3 md:h-4 md:w-4" />
                     ${pendingIncomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)} pending
                   </span>
                 </div>
@@ -499,12 +499,12 @@ const Index = () => {
             </div>
 
             {/* Enhanced Income Filter Controls */}
-            <Card className="p-3 sm:p-4">
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <Card className="p-3 md:p-4">
+              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
                 <div className="flex-1 space-y-2">
                   <Label className="text-sm font-medium">Filter by Category</Label>
                   <Select value={incomeFilter} onValueChange={setIncomeFilter}>
-                    <SelectTrigger className="w-full sm:w-48">
+                    <SelectTrigger className="w-full md:w-48">
                       <SelectValue placeholder="All categories" />
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-background border shadow-md">
@@ -518,12 +518,12 @@ const Index = () => {
                   </Select>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                   <Button 
                     variant="outline"
                     onClick={() => setIncomeFilter('all')}
                     size="sm"
-                    className="text-xs w-full sm:w-auto"
+                    className="text-xs w-full md:w-auto"
                     disabled={incomeFilter === 'all'}
                   >
                     Clear Filters
@@ -533,11 +533,11 @@ const Index = () => {
                       setShowAddIncomeForm(!showAddIncomeForm);
                       if (editingIncome) setEditingIncome(null);
                     }}
-                    className="gap-2 w-full sm:w-auto"
+                    className="gap-2 w-full md:w-auto"
                     size="sm"
                   >
                     <Plus className="h-4 w-4" />
-                    <span className="sm:inline">Add Income</span>
+                    Add Income
                   </Button>
                 </div>
               </div>

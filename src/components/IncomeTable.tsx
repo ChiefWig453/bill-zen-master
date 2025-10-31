@@ -58,11 +58,11 @@ export const IncomeTable = ({
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className={`pb-3 sm:pb-6 ${title.includes('Pending') ? 'bg-yellow-50/50 dark:bg-yellow-950/20' : 'bg-green-50/50 dark:bg-green-950/20'}`}>
-        <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <CardHeader className={`pb-3 md:pb-6 ${title.includes('Pending') ? 'bg-yellow-50/50 dark:bg-yellow-950/20' : 'bg-green-50/50 dark:bg-green-950/20'}`}>
+        <CardTitle className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <div className="flex items-center gap-2">
             {icon}
-            <span className="text-base sm:text-lg">{title}</span>
+            <span className="text-base md:text-lg">{title}</span>
             <Badge 
               variant={title.includes('Pending') ? 'secondary' : 'outline'} 
               className={`text-xs ${title.includes('Pending') ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'}`}
@@ -71,13 +71,13 @@ export const IncomeTable = ({
             </Badge>
           </div>
           {incomes.length > 0 && (
-            <div className="text-xs sm:text-sm text-muted-foreground">
+            <div className="text-xs md:text-sm text-muted-foreground">
               Total: ${incomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)}
             </div>
           )}
         </CardTitle>
         {incomes.length > 0 && (
-          <div className="text-xs sm:text-sm text-muted-foreground">
+          <div className="text-xs md:text-sm text-muted-foreground">
             {title.includes('Pending') ? 
               `Waiting for ${incomes.length} income source${incomes.length !== 1 ? 's' : ''}` : 
               `Successfully received from ${incomes.length} source${incomes.length !== 1 ? 's' : ''}`
@@ -88,7 +88,7 @@ export const IncomeTable = ({
       <CardContent className="p-0">
         {incomes.length > 0 ? (
           <>
-            {/* Desktop Table View */}
+            {/* Desktop & Tablet Table View */}
             <div className="hidden md:block overflow-x-auto">
               <Table>
               <TableHeader>

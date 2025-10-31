@@ -397,36 +397,36 @@ const UserManagement = () => {
           </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 lg:gap-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
+              <CardTitle className="text-xs md:text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
-              <div className="text-xl sm:text-2xl font-bold">{profiles.length}</div>
+            <CardContent className="px-4 pb-4 md:px-6 md:pb-6">
+              <div className="text-xl md:text-2xl font-bold">{profiles.length}</div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium">Admins</CardTitle>
-              <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
+              <CardTitle className="text-xs md:text-sm font-medium">Admins</CardTitle>
+              <Shield className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
-              <div className="text-xl sm:text-2xl font-bold">
+            <CardContent className="px-4 pb-4 md:px-6 md:pb-6">
+              <div className="text-xl md:text-2xl font-bold">
                 {profiles.filter(p => p.role === 'admin').length}
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium">Pending Invites</CardTitle>
-              <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
+              <CardTitle className="text-xs md:text-sm font-medium">Pending Invites</CardTitle>
+              <Mail className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
-              <div className="text-xl sm:text-2xl font-bold">
+            <CardContent className="px-4 pb-4 md:px-6 md:pb-6">
+              <div className="text-xl md:text-2xl font-bold">
                 {profiles.filter(p => p.invited_at && !p.first_name).length}
               </div>
             </CardContent>
@@ -435,16 +435,16 @@ const UserManagement = () => {
 
         {/* Users Table */}
           <Card>
-            <CardHeader className="pb-3 sm:pb-6">
-              <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <span className="text-lg sm:text-xl">Users</span>
-                <div className="text-xs sm:text-sm font-normal text-muted-foreground">
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <span className="text-lg md:text-xl">Users</span>
+                <div className="text-xs md:text-sm font-normal text-muted-foreground">
                   Showing {filteredProfiles.length} of {profiles.length} users
                 </div>
               </CardTitle>
             </CardHeader>
-          <CardContent className="p-0 sm:p-6">
-            {/* Desktop Table View */}
+          <CardContent className="p-0 md:p-6">
+            {/* Desktop & Tablet Table View */}
             <div className="hidden md:block">
               <Table>
                 <TableHeader>
