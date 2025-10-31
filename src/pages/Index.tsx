@@ -355,21 +355,21 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Receipt className="h-6 w-6 text-primary" />
+                <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">My Bills</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl sm:text-3xl font-bold">My Bills</h1>
+                <p className="text-sm text-muted-foreground hidden sm:block">
                   Stay on top of your bills and never miss a payment
                 </p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <p className="text-sm text-muted-foreground">Today</p>
-              <p className="font-medium">{format(new Date(), 'EEEE, MMM dd')}</p>
+              <p className="font-medium text-sm sm:text-base">{format(new Date(), 'EEEE, MMM dd')}</p>
             </div>
           </div>
 
@@ -378,27 +378,27 @@ const Index = () => {
 
           {/* Controls */}
           <div className="flex items-center justify-end">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button 
                 variant="outline"
                 onClick={() => {
                   setShowAddIncomeForm(!showAddIncomeForm);
                   if (editingIncome) setEditingIncome(null);
                 }}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 <TrendingUp className="h-4 w-4" />
-                Add Income
+                <span className="sm:inline">Add Income</span>
               </Button>
               
               <Button 
                 onClick={() => {
                   setShowAddTemplateForm(!showAddTemplateForm);
                 }}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4" />
-                Add Bill
+                <span className="sm:inline">Add Bill</span>
               </Button>
             </div>
           </div>
@@ -438,10 +438,10 @@ const Index = () => {
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="dashboard" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="templates">Recurring Bills</TabsTrigger>
-              <TabsTrigger value="income">Income</TabsTrigger>
+            <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
+              <TabsTrigger value="dashboard" className="text-xs sm:text-sm">Dashboard</TabsTrigger>
+              <TabsTrigger value="templates" className="text-xs sm:text-sm">Recurring</TabsTrigger>
+              <TabsTrigger value="income" className="text-xs sm:text-sm">Income</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dashboard">

@@ -127,13 +127,13 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit, onCancelAdd 
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Plus className="h-5 w-5" />
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+          <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
           {editingBill ? 'Edit Bill' : 'Add New Bill'}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -226,11 +226,11 @@ export const AddBillForm = ({ onAddBill, editingBill, onCancelEdit, onCancelAdd 
             </div>
           </div>
           
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-2 pt-4">
+            <Button type="submit" className="w-full sm:flex-1">
               {editingBill ? 'Update Bill' : 'Add Bill'}
             </Button>
-            <Button type="button" variant="outline" onClick={handleCancel}>
+            <Button type="button" variant="outline" onClick={handleCancel} className="w-full sm:w-auto">
               Cancel
             </Button>
           </div>

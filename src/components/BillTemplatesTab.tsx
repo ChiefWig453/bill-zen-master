@@ -299,7 +299,8 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
             </div>
           ) : (
             <>
-              <div className="rounded-md border overflow-hidden">
+              {/* Desktop Table View */}
+              <div className="hidden md:block rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
@@ -375,6 +376,78 @@ export const BillTemplatesTab = ({ onCreateBillFromTemplate }: BillTemplatesTabP
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {templates.map((template) => (
+                  <Card key={template.id} className="overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-base truncate">{template.name}</h3>
+                            <p className="text-xs text-muted-foreground">
+                              Created {new Date(template.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <Button
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => handleEdit(template)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to delete the "${template.name}" template? This action cannot be undone.`)) {
+                                  deleteTemplate(template.id);
+                                }
+                              }}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Category</p>
+                            <Badge variant="outline" className="font-normal text-xs">
+                              {template.category}
+                            </Badge>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Due Day</p>
+                            {template.due_day ? (
+                              <Badge variant="secondary" className="font-mono text-xs">
+                                {template.due_day}{getOrdinalSuffix(template.due_day)}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">—</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="pt-2 border-t">
+                          <p className="text-xs text-muted-foreground mb-1">Amount</p>
+                          {template.amount ? (
+                            <span className="text-green-600 dark:text-green-400 font-semibold text-lg">
+                              ${template.amount.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">Not set</span>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
               
               {/* Enhanced Summary Information */}

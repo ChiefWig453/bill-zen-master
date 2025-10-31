@@ -121,12 +121,12 @@ export const MonthlyBillsChecklist = ({ templates, bills, onBillUpdated }: Month
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{currentMonth} Bills Checklist</CardTitle>
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="text-lg sm:text-xl">{currentMonth} Bills Checklist</CardTitle>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-3">
+      <CardContent className="px-3 sm:px-6">
+        <ScrollArea className="h-[300px] sm:h-[400px] pr-2 sm:pr-4">
+          <div className="space-y-2 sm:space-y-3">
             {templates.map((template) => {
               const isPaid = isTemplatePaid(template);
               const isProcessing = processingIds.has(template.id);
@@ -134,7 +134,7 @@ export const MonthlyBillsChecklist = ({ templates, bills, onBillUpdated }: Month
               return (
                 <div
                   key={template.id}
-                  className="flex items-center space-x-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                 >
                   <Checkbox
                     id={`checklist-${template.id}`}
@@ -146,15 +146,15 @@ export const MonthlyBillsChecklist = ({ templates, bills, onBillUpdated }: Month
                     htmlFor={`checklist-${template.id}`}
                     className="flex-1 cursor-pointer"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className={`font-medium ${isPaid ? 'line-through text-muted-foreground' : ''}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                      <div className="min-w-0 flex-1">
+                        <p className={`font-medium text-sm sm:text-base truncate ${isPaid ? 'line-through text-muted-foreground' : ''}`}>
                           {template.name}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
                           {template.category}
                           {template.amount && ` • $${template.amount.toFixed(2)}`}
-                          {template.due_day && ` • Due: ${template.due_day}${getDaySuffix(template.due_day)}`}
+                          {template.due_day && ` • ${template.due_day}${getDaySuffix(template.due_day)}`}
                         </p>
                       </div>
                     </div>

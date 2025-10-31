@@ -121,8 +121,8 @@ export const AddTemplateForm = ({ onCancel }: AddTemplateFormProps) => {
   };
 
   return (
-    <Card className="p-6 mb-6 bg-card">
-      <h2 className="text-xl font-semibold mb-4 text-foreground">Add Recurring Bill Template</h2>
+    <Card className="p-4 sm:p-6 mb-4 sm:mb-6 bg-card">
+      <h2 className="text-lg sm:text-xl font-semibold mb-4 text-foreground">Add Recurring Bill Template</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="templateName">Template Name *</Label>
@@ -209,11 +209,11 @@ export const AddTemplateForm = ({ onCancel }: AddTemplateFormProps) => {
           />
         </div>
 
-        <div className="flex gap-2 pt-2">
-          <Button type="submit" className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <Button type="submit" className="w-full sm:flex-1">
             Create Template
           </Button>
-          <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+          <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:flex-1">
             Cancel
           </Button>
         </div>

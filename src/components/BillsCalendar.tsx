@@ -88,10 +88,10 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Monthly Overview</CardTitle>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-lg sm:text-xl">Monthly Overview</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-2 sm:px-6">
           <div className="flex justify-center">
             <Calendar
               mode="single"
@@ -99,29 +99,29 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
               onSelect={handleDateSelect}
               modifiers={modifiers}
               modifiersClassNames={modifiersClassNames}
-              className={cn("p-3 pointer-events-auto")}
+              className={cn("p-3 pointer-events-auto scale-90 sm:scale-100")}
             />
           </div>
-          <div className="flex gap-4 mt-4 justify-center flex-wrap">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-purple-100 border border-purple-300"></div>
-              <span className="text-sm">Recurring Bills</span>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-3 sm:mt-4 justify-center">
+            <div className="flex items-center gap-2 justify-center sm:justify-start">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-purple-100 border border-purple-300"></div>
+              <span className="text-xs sm:text-sm">Recurring Bills</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-blue-100 border border-blue-300"></div>
-              <span className="text-sm">Income</span>
+            <div className="flex items-center gap-2 justify-center sm:justify-start">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-blue-100 border border-blue-300"></div>
+              <span className="text-xs sm:text-sm">Income</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
               {selectedDate && format(selectedDate, 'MMMM d, yyyy')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs sm:text-sm">
               Bills and income scheduled for this date
             </DialogDescription>
           </DialogHeader>
@@ -129,22 +129,22 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
           <div className="space-y-4">
             {selectedItems.bills.length > 0 && (
               <div>
-                <h4 className="font-semibold mb-2">Bills</h4>
+                <h4 className="font-semibold mb-2 text-sm sm:text-base">Bills</h4>
                 <div className="space-y-2">
                   {selectedItems.bills.map(bill => (
-                    <div key={bill.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{bill.name}</span>
+                    <div key={bill.id} className="flex items-start sm:items-center justify-between p-2 sm:p-3 border rounded-lg gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                          <span className="font-medium text-sm truncate">{bill.name}</span>
                           {bill.is_paid ? (
-                            <Badge variant="secondary" className="bg-green-100 text-green-800">Paid</Badge>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs w-fit">Paid</Badge>
                           ) : isBefore(parseISO(bill.due_date), now) ? (
-                            <Badge variant="destructive">Overdue</Badge>
+                            <Badge variant="destructive" className="text-xs w-fit">Overdue</Badge>
                           ) : (
-                            <Badge variant="secondary">Unpaid</Badge>
+                            <Badge variant="secondary" className="text-xs w-fit">Unpaid</Badge>
                           )}
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-xs sm:text-sm text-muted-foreground truncate">
                           ${Number(bill.amount).toFixed(2)} • {bill.category}
                         </div>
                       </div>
@@ -156,8 +156,9 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
                             onEditBill(bill);
                             setShowDetailsDialog(false);
                           }}
+                          className="shrink-0 h-8 w-8 p-0"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       )}
                     </div>
@@ -168,16 +169,16 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
 
             {selectedItems.templates.length > 0 && (
               <div>
-                <h4 className="font-semibold mb-2">Recurring Bills (Not Yet Created)</h4>
+                <h4 className="font-semibold mb-2 text-sm sm:text-base">Recurring Bills (Not Yet Created)</h4>
                 <div className="space-y-2">
                   {selectedItems.templates.map(template => (
-                    <div key={template.id} className="flex items-center justify-between p-3 border rounded-lg bg-purple-50">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{template.name}</span>
-                          <Badge variant="secondary" className="bg-purple-100 text-purple-800">Template</Badge>
+                    <div key={template.id} className="flex items-start justify-between p-2 sm:p-3 border rounded-lg bg-purple-50 gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                          <span className="font-medium text-sm truncate">{template.name}</span>
+                          <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs w-fit">Template</Badge>
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-xs sm:text-sm text-muted-foreground truncate">
                           {template.amount ? `$${Number(template.amount).toFixed(2)} • ` : ''}{template.category}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
@@ -192,16 +193,16 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
 
             {selectedItems.incomes.length > 0 && (
               <div>
-                <h4 className="font-semibold mb-2">Income</h4>
+                <h4 className="font-semibold mb-2 text-sm sm:text-base">Income</h4>
                 <div className="space-y-2">
                   {selectedItems.incomes.map(income => (
-                    <div key={income.id} className="flex items-center justify-between p-3 border rounded-lg bg-blue-50">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{income.name}</span>
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">Income</Badge>
+                    <div key={income.id} className="flex items-start sm:items-center justify-between p-2 sm:p-3 border rounded-lg bg-blue-50 gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                          <span className="font-medium text-sm truncate">{income.name}</span>
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs w-fit">Income</Badge>
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-xs sm:text-sm text-muted-foreground truncate">
                           ${Number(income.amount).toFixed(2)} • {income.category}
                         </div>
                       </div>
@@ -213,8 +214,9 @@ export const BillsCalendar = ({ bills, incomes, templates, onEditBill, onEditInc
                             onEditIncome(income);
                             setShowDetailsDialog(false);
                           }}
+                          className="shrink-0 h-8 w-8 p-0"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       )}
                     </div>
