@@ -374,9 +374,6 @@ const Index = () => {
           {/* Notifications */}
           <NotificationBanner bills={legacyBills} />
 
-          {/* Income Stats */}
-          <IncomeStats incomes={incomes} />
-
           {/* Controls */}
           <div className="flex items-center justify-end">
             <div className="flex gap-2">
