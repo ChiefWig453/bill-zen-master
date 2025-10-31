@@ -433,7 +433,7 @@ const Index = () => {
             <TabsList>
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="templates">Recurring Bills</TabsTrigger>
-              <TabsTrigger value="income">Income ({incomes.length})</TabsTrigger>
+              <TabsTrigger value="income">Income</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dashboard">
