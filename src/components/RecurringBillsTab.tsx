@@ -1,4 +1,4 @@
-import { useRecurringBills, RecurringBill } from '@/hooks/useRecurringBills';
+import { RecurringBill } from '@/hooks/useRecurringBills';
 import { Plus, Trash2, FileText, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,10 +19,12 @@ const getOrdinalSuffix = (day: number): string => {
 
 interface RecurringBillsTabProps {
   onCreateBillFromRecurringBill: (recurringBill: RecurringBill) => void | Promise<void>;
+  recurringBills: RecurringBill[];
+  isLoading: boolean;
+  deleteRecurringBill: (id: string) => void | Promise<void>;
 }
 
-export const RecurringBillsTab = ({ onCreateBillFromRecurringBill }: RecurringBillsTabProps) => {
-  const { recurringBills, isLoading, deleteRecurringBill } = useRecurringBills();
+export const RecurringBillsTab = ({ onCreateBillFromRecurringBill, recurringBills, isLoading, deleteRecurringBill }: RecurringBillsTabProps) => {
   const { toast } = useToast();
 
   const handleCreateBill = (recurringBill: RecurringBill) => {

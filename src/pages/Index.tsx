@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AddBillForm } from '@/components/AddBillForm';
 import { AddRecurringBillForm } from '@/components/AddRecurringBillForm';
 import { BillCard } from '@/components/BillCard';
@@ -50,7 +50,7 @@ const Index = () => {
   const { user } = useAuth();
   const { bills, isLoading, addBill, updateBill, deleteBill, duplicateBill } = useBills();
   const { incomes, isLoading: isLoadingIncomes, addIncome, updateIncome, deleteIncome, markIncomeReceived } = useIncomes();
-  const { recurringBills, addRecurringBill } = useRecurringBills();
+  const { recurringBills, isLoading: isLoadingRecurringBills, addRecurringBill, deleteRecurringBill } = useRecurringBills();
 
   // Convert database Bill to legacy Bill format for components
   const convertToLegacyBill = (dbBill: DBBill): LegacyBill => ({
@@ -409,6 +409,7 @@ const Index = () => {
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingIncome ? 'Edit Income' : 'Add Income'}</DialogTitle>
+                <DialogDescription className="sr-only">Add or edit an income entry</DialogDescription>
               </DialogHeader>
               <AddIncomeForm
                 onAddIncome={handleAddIncome}
@@ -426,6 +427,7 @@ const Index = () => {
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add Bill</DialogTitle>
+                <DialogDescription className="sr-only">Add a recurring bill</DialogDescription>
               </DialogHeader>
               <AddRecurringBillForm
                 onCancel={() => setShowAddRecurringBillForm(false)}
@@ -565,7 +567,12 @@ const Index = () => {
         </TabsContent>
 
             <TabsContent value="templates">
-              <RecurringBillsTab onCreateBillFromRecurringBill={handleCreateBillFromRecurringBill} />
+              <RecurringBillsTab 
+                onCreateBillFromRecurringBill={handleCreateBillFromRecurringBill}
+                recurringBills={recurringBills}
+                isLoading={isLoadingRecurringBills}
+                deleteRecurringBill={deleteRecurringBill}
+              />
             </TabsContent>
       </Tabs>
 
