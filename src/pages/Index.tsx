@@ -50,7 +50,7 @@ const Index = () => {
   const { user } = useAuth();
   const { bills, isLoading, addBill, updateBill, deleteBill, duplicateBill } = useBills();
   const { incomes, isLoading: isLoadingIncomes, addIncome, updateIncome, deleteIncome, markIncomeReceived } = useIncomes();
-  const { recurringBills } = useRecurringBills();
+  const { recurringBills, addRecurringBill } = useRecurringBills();
 
   // Convert database Bill to legacy Bill format for components
   const convertToLegacyBill = (dbBill: DBBill): LegacyBill => ({
@@ -429,6 +429,7 @@ const Index = () => {
               </DialogHeader>
               <AddRecurringBillForm
                 onCancel={() => setShowAddRecurringBillForm(false)}
+                addRecurringBill={addRecurringBill}
               />
             </DialogContent>
           </Dialog>

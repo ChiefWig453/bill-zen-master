@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useRecurringBills } from "@/hooks/useRecurringBills";
 import { useCategories } from "@/hooks/useCategories";
 import { z } from "zod";
 
@@ -21,17 +20,16 @@ const categorySchema = z.string().trim().min(1, "Category name is required").max
 
 interface AddRecurringBillFormProps {
   onCancel: () => void;
+  addRecurringBill: (data: any) => Promise<any>;
 }
 
-export const AddRecurringBillForm = ({ onCancel }: AddRecurringBillFormProps) => {
+export const AddRecurringBillForm = ({ onCancel, addRecurringBill }: AddRecurringBillFormProps) => {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [dueDay, setDueDay] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [showAddCategory, setShowAddCategory] = useState(false);
-
-  const { addRecurringBill } = useRecurringBills();
   const { allCategories, addCustomCategory } = useCategories();
   const { toast } = useToast();
 
