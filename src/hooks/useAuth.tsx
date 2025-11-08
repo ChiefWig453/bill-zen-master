@@ -82,6 +82,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Auto-logout after 30 minutes of inactivity
+  useEffect(() => {
+    if (!user) return;
+
+    const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
+    let inactivityTimer: NodeJS.Timeout;
+
+    const resetInactivityTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        logout();
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    // Activity events to track
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+
+    // Add event listeners
+    activityEvents.forEach(event => {
+      document.addEventListener(event, resetInactivityTimer, true);
+    });
+
+    // Start the initial timer
+    resetInactivityTimer();
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      activityEvents.forEach(event => {
+        document.removeEventListener(event, resetInactivityTimer, true);
+      });
+    };
+  }, [user]);
+
   // Set up real-time subscription for preferences changes
   useEffect(() => {
     if (!user) return;
