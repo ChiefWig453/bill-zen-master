@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MaintenanceChecklist } from "@/components/MaintenanceChecklist";
 import { AddMaintenanceTaskDialog } from "@/components/AddMaintenanceTaskDialog";
+import { PresetMaintenanceTasksDialog } from "@/components/PresetMaintenanceTasksDialog";
 import { useMaintenanceTasks } from "@/hooks/useMaintenanceTasks";
 import { Navigation } from "@/components/Navigation";
 import { Wrench } from "lucide-react";
@@ -24,7 +25,10 @@ const HomeMaintenance = () => {
               </p>
             </div>
           </div>
-          <AddMaintenanceTaskDialog />
+          <div className="flex gap-2">
+            <PresetMaintenanceTasksDialog />
+            <AddMaintenanceTaskDialog />
+          </div>
         </div>
 
       <Tabs defaultValue="weekly" className="space-y-6">
