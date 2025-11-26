@@ -6,12 +6,15 @@ import jwt, { type Secret, type SignOptions } from 'jsonwebtoken';
 import { query } from '../config/database';
 import { z } from 'zod';
 
-// Validate JWT_SECRET exists at runtime
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
+// JWT configuration helpers
+const getJwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return secret;
+};
 
-const JWT_SECRET: string = process.env.JWT_SECRET;
 const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || '15m';
 const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || '7d';
 
@@ -145,7 +148,7 @@ export const authService = {
     // Verify refresh token
     let decoded: any;
     try {
-      decoded = jwt.verify(refreshToken, JWT_SECRET);
+      decoded = jwt.verify(refreshToken, getJwtSecret());
     } catch (error) {
       throw new Error('Invalid refresh token');
     }
@@ -184,7 +187,7 @@ export const authService = {
   generateAccessToken(userId: string, role: 'admin' | 'user'): string {
     return jwt.sign(
       { userId, role },
-      JWT_SECRET as Secret,
+      getJwtSecret() as Secret,
       { expiresIn: JWT_ACCESS_EXPIRY } as SignOptions
     );
   },
@@ -192,7 +195,7 @@ export const authService = {
   generateRefreshToken(userId: string): string {
     return jwt.sign(
       { userId },
-      JWT_SECRET as Secret,
+      getJwtSecret() as Secret,
       { expiresIn: JWT_REFRESH_EXPIRY } as SignOptions
     );
   }
