@@ -339,6 +339,15 @@ class ApiClient {
       body: JSON.stringify(updates),
     });
   }
+
+  // Profile API
+  async getProfile() {
+    return this.request('/auth/profile', { method: 'GET' });
+  }
+
+  async getUserRole() {
+    return this.request('/auth/role', { method: 'GET' });
+  }
 }
 
 export const apiClient = new ApiClient();
