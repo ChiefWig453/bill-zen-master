@@ -129,7 +129,7 @@ export const IncomeTable = ({
                     </TableCell>
                     <TableCell className="py-4 text-right font-mono">
                       <span className={`font-semibold text-lg ${income.is_received ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                        ${income.amount.toFixed(2)}
+                        ${Number(income.amount).toFixed(2)}
                       </span>
                     </TableCell>
                     <TableCell className="py-4 text-center">
@@ -237,7 +237,7 @@ export const IncomeTable = ({
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Amount</p>
                         <span className={`font-semibold text-xl ${income.is_received ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                          ${income.amount.toFixed(2)}
+                          ${Number(income.amount).toFixed(2)}
                         </span>
                       </div>
                       <div className="text-right">
