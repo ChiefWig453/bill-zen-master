@@ -7,8 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Library, Plus } from "lucide-react";
 import { presetMaintenanceTasks, PresetMaintenanceTask } from "@/data/presetMaintenanceTasks";
-import { supabase } from "@/integrations/supabase/client";
 import { apiClient } from '@/lib/apiClient';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -16,6 +16,7 @@ export const PresetMaintenanceTasksDialog = () => {
   const [open, setOpen] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -43,12 +44,18 @@ export const PresetMaintenanceTasksDialog = () => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Not Authenticated",
+        description: "Please log in to add tasks.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsAdding(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
       const tasksToAdd = presetMaintenanceTasks
         .filter(task => selectedTasks.has(task.name))
         .map(task => ({
@@ -61,11 +68,16 @@ export const PresetMaintenanceTasksDialog = () => {
           is_custom: false,
         }));
 
-      const { error } = await supabase
-        .from('maintenance_tasks')
-        .insert(tasksToAdd);
+      // Create tasks one by one
+      const results = await Promise.all(
+        tasksToAdd.map(task => apiClient.createMaintenanceTask(task))
+      );
 
-      if (error) throw error;
+      // Check if any failed
+      const failed = results.filter(r => r.error);
+      if (failed.length > 0) {
+        throw new Error(`Failed to add ${failed.length} task(s)`);
+      }
 
       toast({
         title: "Tasks Added",
