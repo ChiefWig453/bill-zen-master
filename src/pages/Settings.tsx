@@ -8,11 +8,11 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { personalInfoSchema, passwordUpdateSchema } from '@/lib/validation';
 import type { PersonalInfoFormData, PasswordUpdateFormData } from '@/types/settings';
 import { Navigation } from '@/components/Navigation';
 import { Loader2 } from 'lucide-react';
+import { apiClient } from '@/lib/apiClient';
 
 const Settings = () => {
   const { user, profile, userPreferences, updateUserPreferences, refreshProfile } = useAuth();
@@ -99,28 +99,7 @@ const Settings = () => {
 
     setIsUpdatingPassword(true);
     try {
-      // Verify current password
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: data.current_password,
-      });
-
-      if (signInError) {
-        toast({
-          title: "Error",
-          description: "Current password is incorrect",
-          variant: "destructive",
-        });
-        setIsUpdatingPassword(false);
-        return;
-      }
-
-      // Update to new password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: data.new_password,
-      });
-
-      if (updateError) throw updateError;
+      await apiClient.updatePassword(data.current_password, data.new_password);
 
       toast({
         title: "Success",

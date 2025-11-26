@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { resetPasswordSchema } from '@/lib/validation';
+import { apiClient } from '@/lib/apiClient';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -21,11 +21,10 @@ const ResetPassword = () => {
   useEffect(() => {
     // Check if user came from a valid reset link
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const refreshToken = hashParams.get('refresh_token');
+    const token = hashParams.get('token');
     const type = hashParams.get('type');
 
-    if (type !== 'recovery' || !accessToken || !refreshToken) {
+    if (type !== 'recovery' || !token) {
       toast({
         title: "Invalid reset link",
         description: "This password reset link is invalid or has expired.",
@@ -57,11 +56,14 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      });
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const token = hashParams.get('token');
 
-      if (error) throw error;
+      if (!token) {
+        throw new Error('Invalid reset token');
+      }
+
+      await apiClient.resetPassword(token, password);
 
       toast({
         title: "Password updated",

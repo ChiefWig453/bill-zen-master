@@ -4,10 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { editUserSchema } from '@/lib/validation';
+import { apiClient } from '@/lib/apiClient';
 
 interface EditUserDialogProps {
   open: boolean;
@@ -64,39 +64,12 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
     setIsLoading(true);
 
     try {
-      // Update profile (without role)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          email: email.trim(),
-        })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // Update role in user_roles table
-      const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
-
-      if (existingRole) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .update({ role })
-          .eq('user_id', user.id);
-        
-        if (roleError) throw roleError;
-      } else {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: user.id, role });
-        
-        if (roleError) throw roleError;
-      }
+      await apiClient.updateUser(user.id, {
+        email: email.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        role,
+      });
 
       toast({
         title: "User updated",

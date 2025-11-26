@@ -52,7 +52,7 @@ export const PresetMaintenanceTasksDialog = () => {
           description: task.description,
           frequency: task.frequency,
           season: task.season || null,
-          reminder_days_before: task.reminderDaysBefore,
+          reminder_days_before: task.reminder_days_before,
           is_custom: false,
         }));
 

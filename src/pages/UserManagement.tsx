@@ -11,8 +11,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { InviteUserDialog } from '@/components/InviteUserDialog';
 import { EditUserDialog } from '@/components/EditUserDialog';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/apiClient';
 
 interface Profile {
   id: string;
@@ -68,27 +68,9 @@ const UserManagement = () => {
 
   const fetchProfiles = async () => {
     try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (profilesError) throw profilesError;
-
-      // Fetch roles for all users
-      const { data: rolesData } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
-
-      // Merge roles with profiles
-      const profilesWithRoles = (profilesData || []).map(profile => ({
-        ...profile,
-        role: rolesData?.find(r => r.user_id === profile.id)?.role || 'user'
-      }));
-
-      setProfiles(profilesWithRoles);
+      const users = await apiClient.getUsers();
+      setProfiles(users);
     } catch (error) {
-      // Don't log sensitive error details to console in production
       toast({
         title: "Error",
         description: "Failed to load users.",
@@ -154,29 +136,7 @@ const UserManagement = () => {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('You must be logged in to delete users');
-      }
-
-      const response = await fetch(
-        `https://rzzxfufbiziokdhaokcn.supabase.co/functions/v1/delete-user`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ userId }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete user');
-      }
+      await apiClient.deleteUser(userId);
 
       setProfiles(prev => prev.filter(p => p.id !== userId));
 
@@ -254,28 +214,9 @@ const UserManagement = () => {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('You must be logged in to delete users');
-      }
-
-      const response = await fetch(
-        `https://rzzxfufbiziokdhaokcn.supabase.co/functions/v1/delete-user`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ userIds: selectedUsers }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete users');
+      // Delete users one by one
+      for (const userId of selectedUsers) {
+        await apiClient.deleteUser(userId);
       }
 
       setProfiles(prev => prev.filter(p => !selectedUsers.includes(p.id)));
@@ -283,7 +224,7 @@ const UserManagement = () => {
 
       toast({
         title: "Users deleted",
-        description: result.message || `${selectedUsers.length} user(s) have been deleted.`
+        description: `${selectedUsers.length} user(s) have been deleted.`
       });
     } catch (error: any) {
       toast({

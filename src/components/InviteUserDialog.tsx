@@ -5,9 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { inviteUserSchema } from '@/lib/validation';
+import { apiClient } from '@/lib/apiClient';
 
 interface InviteUserDialogProps {
   open: boolean;
@@ -48,39 +48,17 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
     setIsLoading(true);
 
     try {
-      // Call edge function to invite user (uses admin API to avoid logging in the new user)
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('You must be logged in to invite users');
-      }
-
-      const response = await fetch(
-        `https://rzzxfufbiziokdhaokcn.supabase.co/functions/v1/invite-user`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            email: email.trim(),
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            role,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to invite user');
-      }
+      await apiClient.inviteUser({
+        email: email.trim(),
+        password: 'ChangeMe123!', // Default password - user should change it
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        role,
+      });
 
       toast({
         title: "User invited successfully",
-        description: result.action_link ? `${result.message}\nInvite link (debug): ${result.action_link}` : (result.message || `${email} has been invited and can now sign in.`)
+        description: `${email} has been invited and can now sign in.`
       });
 
       // Reset form
