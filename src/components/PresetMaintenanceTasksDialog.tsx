@@ -45,26 +45,21 @@ export const PresetMaintenanceTasksDialog = () => {
     setIsAdding(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
       const tasksToAdd = presetMaintenanceTasks
         .filter(task => selectedTasks.has(task.name))
         .map(task => ({
-          user_id: user.id,
           name: task.name,
           description: task.description,
           frequency: task.frequency,
           season: task.season || null,
-          reminder_days_before: task.reminder_days_before,
+          reminder_days_before: task.reminderDaysBefore,
           is_custom: false,
         }));
 
-      const { error } = await supabase
-        .from('maintenance_tasks')
-        .insert(tasksToAdd);
-
-      if (error) throw error;
+      // Create tasks one by one
+      for (const task of tasksToAdd) {
+        await apiClient.createMaintenanceTask(task);
+      }
 
       toast({
         title: "Tasks Added",
