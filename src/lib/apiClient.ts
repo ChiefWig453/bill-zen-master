@@ -348,6 +348,51 @@ class ApiClient {
   async getUserRole() {
     return this.request('/auth/role', { method: 'GET' });
   }
+
+  // Users (Admin)
+  async getUsers() {
+    return this.request('/users', { method: 'GET' });
+  }
+
+  async inviteUser(data: { email: string; firstName: string; lastName: string; role: string; password: string }) {
+    return this.request('/users/invite', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateUser(userId: string, data: { firstName?: string; lastName?: string; email?: string; role?: string }) {
+    return this.request(`/users/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteUser(userId: string) {
+    return this.request(`/users/${userId}`, { method: 'DELETE' });
+  }
+
+  // Password Management
+  async requestPasswordReset(email: string) {
+    return this.request('/password/reset-request', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    return this.request('/password/reset', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    });
+  }
+
+  async updatePassword(currentPassword: string, newPassword: string) {
+    return this.request('/password/update', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

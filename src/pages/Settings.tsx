@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/apiClient';
 import { personalInfoSchema, passwordUpdateSchema } from '@/lib/validation';
 import type { PersonalInfoFormData, PasswordUpdateFormData } from '@/types/settings';
 import { Navigation } from '@/components/Navigation';
@@ -52,30 +52,14 @@ const Settings = () => {
 
     setIsUpdatingPersonalInfo(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: data.first_name,
-          last_name: data.last_name,
-        })
-        .eq('id', user.id);
+      const result = await apiClient.updateUser(user.id, {
+        firstName: data.first_name,
+        lastName: data.last_name,
+      });
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
       // Refetch the profile to update the auth context
-      const { data: updatedProfile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (updatedProfile) {
-        personalInfoForm.reset({
-          first_name: updatedProfile.first_name || '',
-          last_name: updatedProfile.last_name || '',
-        });
-      }
-
       await refreshProfile();
 
       toast({

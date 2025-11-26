@@ -64,39 +64,14 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
     setIsLoading(true);
 
     try {
-      // Update profile (without role)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          email: email.trim(),
-        })
-        .eq('id', user.id);
+      const result = await apiClient.updateUser(user.id, {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        role,
+      });
 
-      if (profileError) throw profileError;
-
-      // Update role in user_roles table
-      const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
-
-      if (existingRole) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .update({ role })
-          .eq('user_id', user.id);
-        
-        if (roleError) throw roleError;
-      } else {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: user.id, role });
-        
-        if (roleError) throw roleError;
-      }
+      if (result.error) throw new Error(result.error);
 
       toast({
         title: "User updated",

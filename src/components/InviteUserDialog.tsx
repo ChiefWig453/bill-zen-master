@@ -48,39 +48,21 @@ export const InviteUserDialog = ({ open, onOpenChange, onSuccess }: InviteUserDi
     setIsLoading(true);
 
     try {
-      // Call edge function to invite user (uses admin API to avoid logging in the new user)
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('You must be logged in to invite users');
-      }
+      const result = await apiClient.inviteUser({
+        email: email.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        role,
+        password: 'TempPassword123!', // Default password - user should reset
+      });
 
-      const response = await fetch(
-        `https://rzzxfufbiziokdhaokcn.supabase.co/functions/v1/invite-user`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            email: email.trim(),
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            role,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to invite user');
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       toast({
         title: "User invited successfully",
-        description: result.action_link ? `${result.message}\nInvite link (debug): ${result.action_link}` : (result.message || `${email} has been invited and can now sign in.`)
+        description: `${email} has been invited with password: TempPassword123! (they should change it immediately)`
       });
 
       // Reset form
