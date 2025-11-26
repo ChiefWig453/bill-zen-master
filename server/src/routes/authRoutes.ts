@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authService, signupSchema, loginSchema } from '../services/authService';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { query } from '../config/database';
 import { z } from 'zod';
 
 const router = Router();
@@ -97,6 +99,44 @@ router.post('/logout', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({ error: 'Failed to logout' });
+  }
+});
+
+// Get user profile
+router.get('/profile', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await query(
+      'SELECT id, email, first_name, last_name, created_at, updated_at, invited_at, invited_by FROM profiles WHERE id = $1',
+      [req.userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.json(null);
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ error: 'Failed to get profile' });
+  }
+});
+
+// Get user role
+router.get('/role', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await query(
+      'SELECT role FROM user_roles WHERE user_id = $1',
+      [req.userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.json({ role: null });
+    }
+    
+    res.json({ role: result.rows[0].role });
+  } catch (error) {
+    console.error('Get role error:', error);
+    res.status(500).json({ error: 'Failed to get role' });
   }
 });
 

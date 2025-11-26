@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import type { UserPreferences } from '@/types/settings';
 import { apiClient } from '@/lib/apiClient';
 
@@ -94,62 +93,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, [user]);
 
-  // Set up real-time subscription for preferences changes
+  // Poll for preferences and profile changes
   useEffect(() => {
     if (!user) return;
 
-    const prefsChannel = supabase
-      .channel('auth-user-preferences-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_preferences',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          fetchUserPreferences(user.id);
-        }
-      )
-      .subscribe();
+    const interval = setInterval(() => {
+      fetchUserProfile(user.id);
+      fetchUserPreferences(user.id);
+    }, 30000); // Poll every 30 seconds
 
-    const profileChannel = supabase
-      .channel('auth-user-profile-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${user.id}`,
-        },
-        () => {
-          fetchUserProfile(user.id);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(prefsChannel);
-      supabase.removeChannel(profileChannel);
-    };
+    return () => clearInterval(interval);
   }, [user]);
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const result = await apiClient.getProfile();
       
-      if (error && error.code !== 'PGRST116') {
-        // Don't log sensitive error details to console in production
+      if (result.error) {
         return;
       }
       
-      setProfile(data);
+      setProfile(result.data);
     } catch (error) {
       // Don't log sensitive error details to console in production
     }
@@ -157,17 +121,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const fetchUserRole = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
+      const result = await apiClient.getUserRole();
       
-      if (error && error.code !== 'PGRST116') {
+      if (result.error) {
         return;
       }
       
-      setUserRole(data?.role || null);
+      setUserRole((result.data as any)?.role || null);
     } catch (error) {
       // Don't log sensitive error details to console in production
     }
@@ -175,35 +135,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const fetchUserPreferences = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const result = await apiClient.getPreferences();
       
-      if (error) {
+      if (result.error) {
         return;
       }
       
-      // If no preferences exist, create default ones
-      if (!data) {
-        const { data: newPrefs, error: insertError } = await supabase
-          .from('user_preferences')
-          .insert({
-            user_id: userId,
-            bills_enabled: true,
-            doordash_enabled: false,
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          return;
-        }
-        setUserPreferences(newPrefs);
-      } else {
-        setUserPreferences(data);
-      }
+      setUserPreferences(result.data as UserPreferences);
     } catch (error) {
       // Don't log sensitive error details to console in production
     }
@@ -217,13 +155,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const updateUserPreferences = async (updates: Partial<Pick<UserPreferences, 'bills_enabled' | 'doordash_enabled' | 'home_maintenance_enabled'>>): Promise<void> => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .upsert({ user_id: user.id, ...updates }, { onConflict: 'user_id' })
-        .select()
-        .single();
-      if (error) return;
-      setUserPreferences(data);
+      const result = await apiClient.updatePreferences(updates);
+      if (result.error) return;
+      setUserPreferences(result.data as UserPreferences);
     } catch (e) {
       // swallow
     }
