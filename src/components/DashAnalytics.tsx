@@ -313,7 +313,7 @@ export const DashAnalytics = ({ sessions, expenses }: DashAnalyticsProps) => {
                               Earnings: {formatCurrency(data.earnings)}
                             </p>
                             <p className="text-secondary">
-                              Hours: {data.hours.toFixed(1)}h
+                              Hours: {Number(data.hours).toFixed(1)}h
                             </p>
                             <p className="text-muted-foreground">
                               Sessions: {data.sessions}

@@ -518,11 +518,11 @@ const Index = () => {
                   </span>
                   <span className="inline-flex items-center gap-1 text-muted-foreground">
                     <Check className="h-3 w-3 md:h-4 md:w-4" />
-                    ${receivedIncomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)} received
+                    ${receivedIncomes.reduce((sum, income) => sum + Number(income.amount), 0).toFixed(2)} received
                   </span>
                   <span className="inline-flex items-center gap-1 text-muted-foreground">
                     <IncomeCalendarIcon className="h-3 w-3 md:h-4 md:w-4" />
-                    ${pendingIncomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)} pending
+                    ${pendingIncomes.reduce((sum, income) => sum + Number(income.amount), 0).toFixed(2)} pending
                   </span>
                 </div>
               )}

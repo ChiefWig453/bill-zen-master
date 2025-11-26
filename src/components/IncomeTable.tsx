@@ -72,7 +72,7 @@ export const IncomeTable = ({
           </div>
           {incomes.length > 0 && (
             <div className="text-xs md:text-sm text-muted-foreground">
-              Total: ${incomes.reduce((sum, income) => sum + income.amount, 0).toFixed(2)}
+              Total: ${incomes.reduce((sum, income) => sum + Number(income.amount), 0).toFixed(2)}
             </div>
           )}
         </CardTitle>

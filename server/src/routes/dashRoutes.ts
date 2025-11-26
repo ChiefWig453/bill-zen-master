@@ -11,7 +11,21 @@ router.get('/sessions', authenticateToken, async (req: AuthRequest, res) => {
       'SELECT * FROM dash_sessions WHERE user_id = $1 ORDER BY start_time DESC',
       [req.userId]
     );
-    res.json(result.rows);
+    
+    // Convert numeric strings to numbers
+    const sessions = result.rows.map(session => ({
+      ...session,
+      base_pay: Number(session.base_pay),
+      tips_app: Number(session.tips_app),
+      tips_cash: Number(session.tips_cash),
+      promotions: Number(session.promotions),
+      total_earnings: Number(session.total_earnings),
+      miles_driven: session.miles_driven != null ? Number(session.miles_driven) : null,
+      gas_cost: session.gas_cost != null ? Number(session.gas_cost) : null,
+      total_hours: session.total_hours != null ? Number(session.total_hours) : null
+    }));
+    
+    res.json(sessions);
   } catch (error) {
     console.error('Error fetching dash sessions:', error);
     res.status(500).json({ error: 'Failed to fetch dash sessions' });
@@ -30,7 +44,19 @@ router.post('/sessions', authenticateToken, async (req: AuthRequest, res) => {
       [req.userId, start_time, end_time, base_pay || 0, tips_app || 0, tips_cash || 0, promotions || 0, total_earnings || 0, total_deliveries || 0, miles_driven, gas_cost, notes]
     );
     
-    res.status(201).json(result.rows[0]);
+    const session = {
+      ...result.rows[0],
+      base_pay: Number(result.rows[0].base_pay),
+      tips_app: Number(result.rows[0].tips_app),
+      tips_cash: Number(result.rows[0].tips_cash),
+      promotions: Number(result.rows[0].promotions),
+      total_earnings: Number(result.rows[0].total_earnings),
+      miles_driven: result.rows[0].miles_driven != null ? Number(result.rows[0].miles_driven) : null,
+      gas_cost: result.rows[0].gas_cost != null ? Number(result.rows[0].gas_cost) : null,
+      total_hours: result.rows[0].total_hours != null ? Number(result.rows[0].total_hours) : null
+    };
+    
+    res.status(201).json(session);
   } catch (error) {
     console.error('Error creating dash session:', error);
     res.status(500).json({ error: 'Failed to create dash session' });
@@ -58,7 +84,19 @@ router.patch('/sessions/:id', authenticateToken, async (req: AuthRequest, res) =
       return res.status(404).json({ error: 'Dash session not found' });
     }
     
-    res.json(result.rows[0]);
+    const session = {
+      ...result.rows[0],
+      base_pay: Number(result.rows[0].base_pay),
+      tips_app: Number(result.rows[0].tips_app),
+      tips_cash: Number(result.rows[0].tips_cash),
+      promotions: Number(result.rows[0].promotions),
+      total_earnings: Number(result.rows[0].total_earnings),
+      miles_driven: result.rows[0].miles_driven != null ? Number(result.rows[0].miles_driven) : null,
+      gas_cost: result.rows[0].gas_cost != null ? Number(result.rows[0].gas_cost) : null,
+      total_hours: result.rows[0].total_hours != null ? Number(result.rows[0].total_hours) : null
+    };
+    
+    res.json(session);
   } catch (error) {
     console.error('Error updating dash session:', error);
     res.status(500).json({ error: 'Failed to update dash session' });
@@ -93,7 +131,14 @@ router.get('/expenses', authenticateToken, async (req: AuthRequest, res) => {
       'SELECT * FROM dash_expenses WHERE user_id = $1 ORDER BY date DESC',
       [req.userId]
     );
-    res.json(result.rows);
+    
+    // Convert numeric strings to numbers
+    const expenses = result.rows.map(expense => ({
+      ...expense,
+      amount: Number(expense.amount)
+    }));
+    
+    res.json(expenses);
   } catch (error) {
     console.error('Error fetching dash expenses:', error);
     res.status(500).json({ error: 'Failed to fetch dash expenses' });
@@ -112,7 +157,12 @@ router.post('/expenses', authenticateToken, async (req: AuthRequest, res) => {
       [req.userId, date, amount, category, description, receipt_url]
     );
     
-    res.status(201).json(result.rows[0]);
+    const expense = {
+      ...result.rows[0],
+      amount: Number(result.rows[0].amount)
+    };
+    
+    res.status(201).json(expense);
   } catch (error) {
     console.error('Error creating dash expense:', error);
     res.status(500).json({ error: 'Failed to create dash expense' });
@@ -140,7 +190,12 @@ router.patch('/expenses/:id', authenticateToken, async (req: AuthRequest, res) =
       return res.status(404).json({ error: 'Dash expense not found' });
     }
     
-    res.json(result.rows[0]);
+    const expense = {
+      ...result.rows[0],
+      amount: Number(result.rows[0].amount)
+    };
+    
+    res.json(expense);
   } catch (error) {
     console.error('Error updating dash expense:', error);
     res.status(500).json({ error: 'Failed to update dash expense' });

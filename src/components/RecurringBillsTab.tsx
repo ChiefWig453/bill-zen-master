@@ -249,7 +249,7 @@ export const RecurringBillsTab = ({ onCreateBillFromRecurringBill, recurringBill
                       <span className="text-sm font-medium">Monthly Estimate</span>
                     </div>
                     <div className="text-2xl font-bold">
-                      ${recurringBills.reduce((sum, recurringBill) => sum + (recurringBill.amount || 0), 0).toFixed(2)}
+                      ${recurringBills.reduce((sum, recurringBill) => sum + Number(recurringBill.amount || 0), 0).toFixed(2)}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       From recurring bills with amounts set
