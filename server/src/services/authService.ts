@@ -32,9 +32,9 @@ export const loginSchema = z.object({
 
 export const authService = {
   async signup(email: string, password: string, firstName?: string, lastName?: string) {
-    // Check if user exists
+    // Check if user exists in users table
     const existingUser = await query(
-      'SELECT id FROM profiles WHERE email = $1',
+      'SELECT id FROM users WHERE email = $1',
       [email]
     );
 
@@ -51,42 +51,49 @@ export const authService = {
     try {
       await client.query('BEGIN');
 
-      // Insert into profiles
-      const profileResult = await client.query(
-        `INSERT INTO profiles (id, email, first_name, last_name)
-         VALUES (gen_random_uuid(), $1, $2, $3)
-         RETURNING id, email, first_name, last_name, created_at`,
-        [email, firstName || null, lastName || null]
-      );
+      // Generate user ID
+      const userId = crypto.randomUUID();
 
-      const profile = profileResult.rows[0];
+      // Insert into users table
+      await client.query(
+        `INSERT INTO users (id, email, created_at, updated_at)
+         VALUES ($1, $2, NOW(), NOW())`,
+        [userId, email]
+      );
 
       // Insert password
       await client.query(
-        'INSERT INTO user_passwords (user_id, password_hash) VALUES ($1, $2)',
-        [profile.id, hashedPassword]
+        'INSERT INTO user_passwords (user_id, password_hash, created_at, updated_at) VALUES ($1, $2, NOW(), NOW())',
+        [userId, hashedPassword]
+      );
+
+      // Insert into profiles
+      await client.query(
+        `INSERT INTO profiles (id, email, first_name, last_name, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+        [userId, email, firstName || null, lastName || null]
       );
 
       // Assign default 'user' role
       await client.query(
-        `INSERT INTO user_roles (user_id, role) VALUES ($1, 'user')`,
-        [profile.id]
+        `INSERT INTO user_roles (user_id, role, created_at) VALUES ($1, 'user', NOW())`,
+        [userId]
       );
 
       // Create default preferences
       await client.query(
-        `INSERT INTO user_preferences (user_id, bills_enabled, doordash_enabled, home_maintenance_enabled)
-         VALUES ($1, true, false, false)`,
-        [profile.id]
+        `INSERT INTO user_preferences (user_id, bills_enabled, doordash_enabled, home_maintenance_enabled, created_at, updated_at)
+         VALUES ($1, true, false, false, NOW(), NOW())`,
+        [userId]
       );
 
       await client.query('COMMIT');
 
       return {
-        id: profile.id,
-        email: profile.email,
-        firstName: profile.first_name,
-        lastName: profile.last_name
+        id: userId,
+        email: email,
+        firstName: firstName || null,
+        lastName: lastName || null
       };
     } catch (error) {
       await client.query('ROLLBACK');
@@ -97,14 +104,15 @@ export const authService = {
   },
 
   async login(email: string, password: string) {
-    // Get user with password and role
+    // Get user with password and role from new schema
     const result = await query(
-      `SELECT p.id, p.email, p.first_name, p.last_name, 
+      `SELECT u.id, u.email, p.first_name, p.last_name, 
               up.password_hash, ur.role
-       FROM profiles p
-       JOIN user_passwords up ON p.id = up.user_id
-       JOIN user_roles ur ON p.id = ur.user_id
-       WHERE p.email = $1`,
+       FROM users u
+       JOIN user_passwords up ON u.id = up.user_id
+       JOIN profiles p ON u.id = p.id
+       JOIN user_roles ur ON u.id = ur.user_id
+       WHERE u.email = $1`,
       [email]
     );
 
@@ -126,8 +134,8 @@ export const authService = {
 
     // Store refresh token
     await query(
-      `INSERT INTO refresh_tokens (user_id, token, expires_at)
-       VALUES ($1, $2, NOW() + INTERVAL '${JWT_REFRESH_EXPIRY}')`,
+      `INSERT INTO refresh_tokens (user_id, token, expires_at, created_at)
+       VALUES ($1, $2, NOW() + INTERVAL '${JWT_REFRESH_EXPIRY}', NOW())`,
       [user.id, refreshToken]
     );
 
