@@ -11,7 +11,14 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
       'SELECT * FROM incomes WHERE user_id = $1 ORDER BY next_date ASC, date_received ASC',
       [req.userId]
     );
-    res.json(result.rows);
+    
+    // Convert numeric strings to numbers
+    const incomes = result.rows.map(income => ({
+      ...income,
+      amount: Number(income.amount)
+    }));
+    
+    res.json(incomes);
   } catch (error) {
     console.error('Error fetching incomes:', error);
     res.status(500).json({ error: 'Failed to fetch incomes' });
@@ -30,7 +37,12 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       [req.userId, name, amount, category, frequency, is_recurring || false, next_date, is_received || false, date_received]
     );
     
-    res.status(201).json(result.rows[0]);
+    const income = {
+      ...result.rows[0],
+      amount: Number(result.rows[0].amount)
+    };
+    
+    res.status(201).json(income);
   } catch (error) {
     console.error('Error creating income:', error);
     res.status(500).json({ error: 'Failed to create income' });
@@ -58,7 +70,12 @@ router.patch('/:id', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Income not found' });
     }
     
-    res.json(result.rows[0]);
+    const income = {
+      ...result.rows[0],
+      amount: Number(result.rows[0].amount)
+    };
+    
+    res.json(income);
   } catch (error) {
     console.error('Error updating income:', error);
     res.status(500).json({ error: 'Failed to update income' });

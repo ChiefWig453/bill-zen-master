@@ -11,7 +11,14 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
       'SELECT * FROM bills WHERE user_id = $1 ORDER BY due_date ASC',
       [req.userId]
     );
-    res.json(result.rows);
+    
+    // Convert numeric strings to numbers
+    const bills = result.rows.map(bill => ({
+      ...bill,
+      amount: Number(bill.amount)
+    }));
+    
+    res.json(bills);
   } catch (error) {
     console.error('Error fetching bills:', error);
     res.status(500).json({ error: 'Failed to fetch bills' });
@@ -30,7 +37,12 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       [req.userId, name, amount, due_date, category, is_paid || false, is_archived || false]
     );
     
-    res.status(201).json(result.rows[0]);
+    const bill = {
+      ...result.rows[0],
+      amount: Number(result.rows[0].amount)
+    };
+    
+    res.status(201).json(bill);
   } catch (error) {
     console.error('Error creating bill:', error);
     res.status(500).json({ error: 'Failed to create bill' });
@@ -58,7 +70,12 @@ router.patch('/:id', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Bill not found' });
     }
     
-    res.json(result.rows[0]);
+    const bill = {
+      ...result.rows[0],
+      amount: Number(result.rows[0].amount)
+    };
+    
+    res.json(bill);
   } catch (error) {
     console.error('Error updating bill:', error);
     res.status(500).json({ error: 'Failed to update bill' });
@@ -93,7 +110,14 @@ router.get('/templates', authenticateToken, async (req: AuthRequest, res) => {
       'SELECT * FROM bill_templates WHERE user_id = $1 ORDER BY name ASC',
       [req.userId]
     );
-    res.json(result.rows);
+    
+    // Convert numeric strings to numbers
+    const templates = result.rows.map(template => ({
+      ...template,
+      amount: template.amount != null ? Number(template.amount) : null
+    }));
+    
+    res.json(templates);
   } catch (error) {
     console.error('Error fetching bill templates:', error);
     res.status(500).json({ error: 'Failed to fetch bill templates' });
@@ -112,7 +136,12 @@ router.post('/templates', authenticateToken, async (req: AuthRequest, res) => {
       [req.userId, name, amount, category, due_day]
     );
     
-    res.status(201).json(result.rows[0]);
+    const template = {
+      ...result.rows[0],
+      amount: result.rows[0].amount != null ? Number(result.rows[0].amount) : null
+    };
+    
+    res.status(201).json(template);
   } catch (error) {
     console.error('Error creating bill template:', error);
     res.status(500).json({ error: 'Failed to create bill template' });
@@ -140,7 +169,12 @@ router.patch('/templates/:id', authenticateToken, async (req: AuthRequest, res) 
       return res.status(404).json({ error: 'Bill template not found' });
     }
     
-    res.json(result.rows[0]);
+    const template = {
+      ...result.rows[0],
+      amount: result.rows[0].amount != null ? Number(result.rows[0].amount) : null
+    };
+    
+    res.json(template);
   } catch (error) {
     console.error('Error updating bill template:', error);
     res.status(500).json({ error: 'Failed to update bill template' });
