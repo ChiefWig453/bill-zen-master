@@ -13,6 +13,10 @@ async function seedAdmin() {
     const v_user_id = crypto.randomUUID();
     const hashedPassword = await bcrypt.hash('password123', 10);
 
+    // Temporarily disable RLS for seeding
+    await pool.query('ALTER TABLE users DISABLE ROW LEVEL SECURITY');
+    await pool.query('ALTER TABLE user_passwords DISABLE ROW LEVEL SECURITY');
+
     // Insert into users
     await pool.query(
       'INSERT INTO users (id, email, created_at, updated_at) VALUES ($1, $2, NOW(), NOW())',
@@ -43,11 +47,22 @@ async function seedAdmin() {
       [v_user_id, true, false, false]
     );
 
+    // Re-enable RLS
+    await pool.query('ALTER TABLE users ENABLE ROW LEVEL SECURITY');
+    await pool.query('ALTER TABLE user_passwords ENABLE ROW LEVEL SECURITY');
+
     console.log('✅ Admin user seeded successfully!');
     console.log('Email: 4rcd07@gmail.com');
     console.log('Password: password123');
   } catch (error) {
     console.error('❌ Error seeding admin:', error);
+    // Re-enable RLS even on error
+    try {
+      await pool.query('ALTER TABLE users ENABLE ROW LEVEL SECURITY');
+      await pool.query('ALTER TABLE user_passwords ENABLE ROW LEVEL SECURITY');
+    } catch (e) {
+      console.error('Failed to re-enable RLS:', e);
+    }
     throw error;
   } finally {
     await pool.end();
