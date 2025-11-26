@@ -81,11 +81,14 @@ Download and install from: https://www.postgresql.org/download/windows/
 
 ### 3.2 Get Your Supabase Database Password
 
+**IMPORTANT:** This password is ONLY used for exporting data from Supabase. Your self-hosted backend will use a DIFFERENT connection string (configured in Step 8).
+
 1. Go to your Supabase Dashboard: https://supabase.com/dashboard/project/rzzxfufbiziokdhaokcn
 2. Navigate to **Project Settings** → **Database**
 3. Scroll down to **Connection String**
 4. Click the eye icon to reveal the password
 5. Copy the password (it's the value after `:[password]@` in the connection string)
+6. You'll paste this password when running the `pg_dump` commands below
 
 ### 3.3 Export the Public Schema Only
 
@@ -306,16 +309,30 @@ psql postgresql://home_admin:your_password@your-server-ip:5432/home_management
 
 ## Step 8: Configure Backend Environment
 
+**This is where your self-hosted PostgreSQL connection goes** (NOT the Supabase connection string).
+
 Create `server/.env` file:
 
 ```env
+# Your NEW self-hosted PostgreSQL database
 DATABASE_URL=postgresql://home_admin:your_secure_password@localhost:5432/home_management
+
+# Generate a secure random string for JWT
 JWT_SECRET=generate-a-long-random-string-here
+
+# For password reset emails
 RESEND_API_KEY=your-resend-api-key
+
+# Server configuration
 PORT=3001
 NODE_ENV=production
 FRONTEND_URL=https://your-frontend-domain.com
 ```
+
+**Note:** 
+- Replace `home_admin` and `your_secure_password` with the credentials you created in Step 2
+- Replace `localhost` with your database server IP if PostgreSQL is on a different machine
+- The Supabase connection string from Step 3 is NO LONGER NEEDED after export
 
 ## Step 9: Run Backend Server
 
