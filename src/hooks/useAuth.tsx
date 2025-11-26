@@ -1,11 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import type { UserPreferences } from '@/types/settings';
+import { apiClient } from '@/lib/apiClient';
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: { id: string; email: string } | null;
+  session: { userId: string } | null;
   profile: any | null;
   userRole: 'admin' | 'user' | null;
   userPreferences: UserPreferences | null;
@@ -32,54 +32,31 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [session, setSession] = useState<{ userId: string } | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'user' | null>(null);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Defer profile, role, and preferences fetch to avoid deadlock
-        if (session?.user) {
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-            fetchUserRole(session.user.id);
-            fetchUserPreferences(session.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-          setUserRole(null);
-          setUserPreferences(null);
-        }
-        
-        setIsLoading(false);
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Check for existing authentication on mount
+    const userId = apiClient.getUserId();
+    
+    if (userId && apiClient.isAuthenticated()) {
+      const userEmail = localStorage.getItem('userEmail') || '';
+      setUser({ id: userId, email: userEmail });
+      setSession({ userId });
       
-      if (session?.user) {
-        setTimeout(() => {
-          fetchUserProfile(session.user.id);
-          fetchUserRole(session.user.id);
-          fetchUserPreferences(session.user.id);
-        }, 0);
-      }
-      
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+      // Fetch user data
+      setTimeout(() => {
+        fetchUserProfile(userId);
+        fetchUserRole(userId);
+        fetchUserPreferences(userId);
+      }, 0);
+    }
+    
+    setIsLoading(false);
   }, []);
 
   // Auto-logout after 30 minutes of inactivity
@@ -252,13 +229,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const result = await apiClient.login(email, password);
 
-      if (error) {
-        return { success: false, error: error.message };
+      if (result.error) {
+        return { success: false, error: result.error };
+      }
+
+      if (result.data) {
+        const userData = { id: result.data.user.id, email: result.data.user.email };
+        setUser(userData);
+        setSession({ userId: result.data.user.id });
+        localStorage.setItem('userEmail', result.data.user.email);
+        
+        // Fetch additional user data
+        setTimeout(() => {
+          fetchUserProfile(result.data.user.id);
+          fetchUserRole(result.data.user.id);
+          fetchUserPreferences(result.data.user.id);
+        }, 0);
       }
 
       return { success: true };
@@ -269,22 +257,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signup = async (email: string, password: string, firstName?: string, lastName?: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-          }
-        }
-      });
+      const result = await apiClient.signup(email, password, firstName, lastName);
 
-      if (error) {
-        return { success: false, error: error.message };
+      if (result.error) {
+        return { success: false, error: result.error };
       }
 
       return { success: true };
@@ -294,7 +270,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = async (): Promise<void> => {
-    await supabase.auth.signOut();
+    await apiClient.logout();
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setUserRole(null);
+    setUserPreferences(null);
+    localStorage.removeItem('userEmail');
   };
 
   return (
