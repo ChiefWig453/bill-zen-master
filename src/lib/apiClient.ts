@@ -178,6 +178,167 @@ class ApiClient {
   isAuthenticated(): boolean {
     return !!this.accessToken;
   }
+
+  // Bills API
+  async getBills() {
+    return this.request('/bills', { method: 'GET' });
+  }
+
+  async createBill(bill: any) {
+    return this.request('/bills', {
+      method: 'POST',
+      body: JSON.stringify(bill),
+    });
+  }
+
+  async updateBill(id: string, updates: any) {
+    return this.request(`/bills/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteBill(id: string) {
+    return this.request(`/bills/${id}`, { method: 'DELETE' });
+  }
+
+  async getBillTemplates() {
+    return this.request('/bills/templates', { method: 'GET' });
+  }
+
+  async createBillTemplate(template: any) {
+    return this.request('/bills/templates', {
+      method: 'POST',
+      body: JSON.stringify(template),
+    });
+  }
+
+  async updateBillTemplate(id: string, updates: any) {
+    return this.request(`/bills/templates/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteBillTemplate(id: string) {
+    return this.request(`/bills/templates/${id}`, { method: 'DELETE' });
+  }
+
+  // Incomes API
+  async getIncomes() {
+    return this.request('/incomes', { method: 'GET' });
+  }
+
+  async createIncome(income: any) {
+    return this.request('/incomes', {
+      method: 'POST',
+      body: JSON.stringify(income),
+    });
+  }
+
+  async updateIncome(id: string, updates: any) {
+    return this.request(`/incomes/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteIncome(id: string) {
+    return this.request(`/incomes/${id}`, { method: 'DELETE' });
+  }
+
+  // DoorDash API
+  async getDashSessions() {
+    return this.request('/dash/sessions', { method: 'GET' });
+  }
+
+  async createDashSession(session: any) {
+    return this.request('/dash/sessions', {
+      method: 'POST',
+      body: JSON.stringify(session),
+    });
+  }
+
+  async updateDashSession(id: string, updates: any) {
+    return this.request(`/dash/sessions/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteDashSession(id: string) {
+    return this.request(`/dash/sessions/${id}`, { method: 'DELETE' });
+  }
+
+  async getDashExpenses() {
+    return this.request('/dash/expenses', { method: 'GET' });
+  }
+
+  async createDashExpense(expense: any) {
+    return this.request('/dash/expenses', {
+      method: 'POST',
+      body: JSON.stringify(expense),
+    });
+  }
+
+  async updateDashExpense(id: string, updates: any) {
+    return this.request(`/dash/expenses/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteDashExpense(id: string) {
+    return this.request(`/dash/expenses/${id}`, { method: 'DELETE' });
+  }
+
+  // Maintenance API
+  async getMaintenanceTasks(frequency?: string) {
+    const query = frequency ? `?frequency=${frequency}` : '';
+    return this.request(`/maintenance/tasks${query}`, { method: 'GET' });
+  }
+
+  async createMaintenanceTask(task: any) {
+    return this.request('/maintenance/tasks', {
+      method: 'POST',
+      body: JSON.stringify(task),
+    });
+  }
+
+  async updateMaintenanceTask(id: string, updates: any) {
+    return this.request(`/maintenance/tasks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteMaintenanceTask(id: string) {
+    return this.request(`/maintenance/tasks/${id}`, { method: 'DELETE' });
+  }
+
+  async getMaintenanceHistory(taskId?: string) {
+    const query = taskId ? `?task_id=${taskId}` : '';
+    return this.request(`/maintenance/history${query}`, { method: 'GET' });
+  }
+
+  async createMaintenanceHistory(history: any) {
+    return this.request('/maintenance/history', {
+      method: 'POST',
+      body: JSON.stringify(history),
+    });
+  }
+
+  // Preferences API
+  async getPreferences() {
+    return this.request('/preferences', { method: 'GET' });
+  }
+
+  async updatePreferences(updates: any) {
+    return this.request('/preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

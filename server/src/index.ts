@@ -49,15 +49,18 @@ app.get('/health', (req, res) => {
 
 // API Routes
 import authRoutes from './routes/authRoutes';
-app.use('/api/auth', authRoutes);
+import billRoutes from './routes/billRoutes';
+import incomeRoutes from './routes/incomeRoutes';
+import dashRoutes from './routes/dashRoutes';
+import maintenanceRoutes from './routes/maintenanceRoutes';
+import preferencesRoutes from './routes/preferencesRoutes';
 
-// Additional routes - will be added in subsequent phases
-// app.use('/api/bills', billsRoutes);
-// app.use('/api/incomes', incomesRoutes);
-// app.use('/api/dash', dashRoutes);
-// app.use('/api/maintenance', maintenanceRoutes);
-// app.use('/api/preferences', preferencesRoutes);
-// app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/bills', billRoutes);
+app.use('/api/incomes', incomeRoutes);
+app.use('/api/dash', dashRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/preferences', preferencesRoutes);
 
 // Error handling
 app.use(errorHandler);

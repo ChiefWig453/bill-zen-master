@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,15 +25,12 @@ export const useBills = () => {
   const fetchBills = async () => {
     if (!user) return;
     
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('bills')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('due_date', { ascending: true });
-
-      if (error) throw error;
-      setBills(data || []);
+      const result = await apiClient.getBills();
+      
+      if (result.error) throw new Error(result.error);
+      setBills((result.data as Bill[]) || []);
     } catch (error: any) {
       console.error('Error fetching bills:', error);
       toast({
@@ -50,21 +47,17 @@ export const useBills = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('bills')
-        .insert([{ ...billData, user_id: user.id }])
-        .select()
-        .single();
-
-      if (error) throw error;
+      const result = await apiClient.createBill(billData);
       
-      setBills(prev => [...prev, data]);
+      if (result.error) throw new Error(result.error);
+      
+      setBills(prev => [...prev, result.data as Bill]);
       toast({
         title: "Bill added",
         description: "Your bill has been successfully added.",
       });
       
-      return data;
+      return result.data as Bill;
     } catch (error: any) {
       console.error('Error adding bill:', error);
       toast({
@@ -78,18 +71,13 @@ export const useBills = () => {
 
   const updateBill = async (id: string, updates: Partial<Bill>) => {
     try {
-      const { data, error } = await supabase
-        .from('bills')
-        .update(updates)
-        .eq('id', id)
-        .eq('user_id', user?.id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const result = await apiClient.updateBill(id, updates);
       
-      setBills(prev => prev.map(bill => bill.id === id ? { ...bill, ...data } : bill));
-      return data;
+      if (result.error) throw new Error(result.error);
+      
+      const updatedBill = result.data as Bill;
+      setBills(prev => prev.map(bill => bill.id === id ? { ...bill, ...updatedBill } : bill));
+      return updatedBill;
     } catch (error: any) {
       console.error('Error updating bill:', error);
       toast({
@@ -103,13 +91,9 @@ export const useBills = () => {
 
   const deleteBill = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('bills')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
+      const result = await apiClient.deleteBill(id);
+      
+      if (result.error) throw new Error(result.error);
       
       setBills(prev => prev.filter(bill => bill.id !== id));
       toast({
@@ -174,32 +158,11 @@ export const useBills = () => {
     if (user) {
       fetchBills();
       migrateFromLocalStorage();
+      
+      // Poll for updates every 30 seconds
+      const interval = setInterval(fetchBills, 30000);
+      return () => clearInterval(interval);
     }
-  }, [user]);
-
-  // Set up realtime subscription
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('bills-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'bills',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          fetchBills();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [user]);
 
   return {
