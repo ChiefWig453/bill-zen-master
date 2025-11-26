@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Bill } from '@/hooks/useBills';
 import { format, addDays, isBefore, parseISO, startOfDay } from 'date-fns';
 import { Check, Pencil } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/apiClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface UpcomingBillsTableProps {
@@ -39,12 +39,9 @@ export const UpcomingBillsTable = ({ bills, onEditBill, onBillUpdated }: Upcomin
     setUpdatingBills(prev => new Set(prev).add(billId));
     
     try {
-      const { error } = await supabase
-        .from('bills')
-        .update({ is_paid: true })
-        .eq('id', billId);
+      const result = await apiClient.updateBill(billId, { is_paid: true });
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
       toast({
         title: 'Success',
