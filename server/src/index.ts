@@ -62,6 +62,17 @@ app.use('/api/dash', dashRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/preferences', preferencesRoutes);
 
+// Serve static files from React build (production only)
+if (process.env.NODE_ENV === 'production') {
+  const frontendDistPath = path.resolve(__dirname, '../../dist');
+  app.use(express.static(frontendDistPath));
+  
+  // Handle React routing - serve index.html for all non-API routes
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+}
+
 // Error handling
 app.use(errorHandler);
 
@@ -69,4 +80,7 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  if (process.env.NODE_ENV === 'production') {
+    console.log(`📦 Serving frontend from ${path.resolve(__dirname, '../../dist')}`);
+  }
 });
