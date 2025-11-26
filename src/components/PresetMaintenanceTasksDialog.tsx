@@ -7,9 +7,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Library, Plus } from "lucide-react";
 import { presetMaintenanceTasks, PresetMaintenanceTask } from "@/data/presetMaintenanceTasks";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/apiClient";
 
 export const PresetMaintenanceTasksDialog = () => {
   const [open, setOpen] = useState(false);

@@ -54,6 +54,8 @@ import incomeRoutes from './routes/incomeRoutes';
 import dashRoutes from './routes/dashRoutes';
 import maintenanceRoutes from './routes/maintenanceRoutes';
 import preferencesRoutes from './routes/preferencesRoutes';
+import userRoutes from './routes/userRoutes';
+import passwordRoutes from './routes/passwordRoutes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/bills', billRoutes);
@@ -61,6 +63,8 @@ app.use('/api/incomes', incomeRoutes);
 app.use('/api/dash', dashRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/preferences', preferencesRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/password', passwordRoutes);
 
 // Error handling
 app.use(errorHandler);

@@ -30,9 +30,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/apiClient";
 
 const formSchema = z.object({
   name: z.string().min(1, "Task name is required").max(255),
@@ -63,21 +63,14 @@ export const AddMaintenanceTaskDialog = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { error } = await supabase.from("maintenance_tasks").insert({
-        user_id: user.id,
+      await apiClient.createMaintenanceTask({
         name: data.name,
         description: data.description || null,
         frequency: data.frequency,
         season: data.frequency === "seasonal" ? data.season : null,
         reminder_days_before: data.reminder_days_before,
         is_custom: true,
-        is_active: true,
       });
-
-      if (error) throw error;
 
       toast({
         title: "Success",
