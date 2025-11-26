@@ -45,13 +45,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     if (userId && apiClient.isAuthenticated()) {
       const userEmail = localStorage.getItem('userEmail') || '';
+      const userRoleStored = localStorage.getItem('userRole') as 'admin' | 'user' | null;
+      
       setUser({ id: userId, email: userEmail });
       setSession({ userId });
+      setUserRole(userRoleStored);
       
       // Fetch user data
       setTimeout(() => {
         fetchUserProfile(userId);
-        fetchUserRole(userId);
         fetchUserPreferences(userId);
       }, 0);
     }
@@ -239,12 +241,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const userData = { id: result.data.user.id, email: result.data.user.email };
         setUser(userData);
         setSession({ userId: result.data.user.id });
+        setUserRole(result.data.user.role); // Store role from API response
+        
         localStorage.setItem('userEmail', result.data.user.email);
+        localStorage.setItem('userRole', result.data.user.role); // Persist role
         
         // Fetch additional user data
         setTimeout(() => {
           fetchUserProfile(result.data.user.id);
-          fetchUserRole(result.data.user.id);
           fetchUserPreferences(result.data.user.id);
         }, 0);
       }
@@ -277,6 +281,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUserRole(null);
     setUserPreferences(null);
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
   };
 
   return (
