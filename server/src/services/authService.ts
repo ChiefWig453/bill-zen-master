@@ -104,13 +104,13 @@ export const authService = {
   },
 
   async login(email: string, password: string) {
-    // Get user with password and role from new schema
+    // Get user with password and role from new schema (profile is optional)
     const result = await query(
       `SELECT u.id, u.email, p.first_name, p.last_name, 
               up.password_hash, ur.role
        FROM users u
        JOIN user_passwords up ON u.id = up.user_id
-       JOIN profiles p ON u.id = p.id
+       LEFT JOIN profiles p ON u.id = p.id
        JOIN user_roles ur ON u.id = ur.user_id
        WHERE u.email = $1`,
       [email]
