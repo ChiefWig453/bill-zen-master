@@ -60,31 +60,144 @@ GRANT ALL PRIVILEGES ON DATABASE home_management TO home_admin;
 
 ## Step 3: Export Schema from Supabase
 
-```bash
-# Install pg_dump if not already installed
-# On your machine (not server), run:
+### 3.1 Install PostgreSQL Client Tools
 
-# Export schema only
+First, ensure you have `pg_dump` installed on your local machine:
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install postgresql-client
+```
+
+**macOS:**
+```bash
+brew install postgresql
+```
+
+**Windows:**
+Download and install from: https://www.postgresql.org/download/windows/
+(Choose the command line tools)
+
+### 3.2 Get Your Supabase Database Password
+
+1. Go to your Supabase Dashboard: https://supabase.com/dashboard/project/rzzxfufbiziokdhaokcn
+2. Navigate to **Project Settings** → **Database**
+3. Scroll down to **Connection String**
+4. Click the eye icon to reveal the password
+5. Copy the password (it's the value after `:[password]@` in the connection string)
+
+### 3.3 Export the Public Schema Only
+
+**IMPORTANT:** Only export the `public` schema. Do NOT export Supabase's internal schemas (auth, storage, realtime, etc.)
+
+```bash
+# Export PUBLIC schema only (structure)
 pg_dump -h db.rzzxfufbiziokdhaokcn.supabase.co \
   -U postgres \
   -d postgres \
+  -n public \
   --schema-only \
   --no-owner \
   --no-privileges \
   -f schema.sql
 
-# Export data only
+# When prompted, enter your Supabase database password
+```
+
+After running this command:
+- You'll be prompted for a password - paste the password you copied
+- The export will take a few seconds
+- You should see a `schema.sql` file created in your current directory
+
+### 3.4 Export Your Data
+
+```bash
+# Export PUBLIC schema data only
 pg_dump -h db.rzzxfufbiziokdhaokcn.supabase.co \
   -U postgres \
   -d postgres \
+  -n public \
   --data-only \
   --no-owner \
   --no-privileges \
+  --disable-triggers \
   -f data.sql
+
+# When prompted, enter your Supabase database password again
 ```
 
-You'll need the Supabase database password. You can find it in:
-Supabase Dashboard → Project Settings → Database → Connection String
+**Note:** The `--disable-triggers` flag ensures data imports even if triggers would normally prevent it.
+
+### 3.5 Verify the Export
+
+Check that the files were created successfully:
+
+```bash
+# Check schema file
+ls -lh schema.sql
+
+# View first 50 lines to verify content
+head -n 50 schema.sql
+
+# Check data file
+ls -lh data.sql
+
+# View first 50 lines
+head -n 50 data.sql
+```
+
+You should see SQL CREATE TABLE statements in `schema.sql` and INSERT statements in `data.sql`.
+
+### 3.6 Troubleshooting Export Issues
+
+**Connection timeout:**
+```bash
+# Add connection timeout parameter
+pg_dump -h db.rzzxfufbiziokdhaokcn.supabase.co \
+  -U postgres \
+  -d postgres \
+  -n public \
+  --connect-timeout=30 \
+  --schema-only \
+  --no-owner \
+  --no-privileges \
+  -f schema.sql
+```
+
+**Password in command (less secure but useful for scripts):**
+```bash
+# Set password environment variable
+export PGPASSWORD='your-supabase-password'
+
+# Run pg_dump without password prompt
+pg_dump -h db.rzzxfufbiziokdhaokcn.supabase.co \
+  -U postgres \
+  -d postgres \
+  -n public \
+  --schema-only \
+  --no-owner \
+  --no-privileges \
+  -f schema.sql
+
+# Clear the password variable
+unset PGPASSWORD
+```
+
+**Alternative: Use Supabase CLI**
+```bash
+# Install Supabase CLI
+npm install -g supabase
+
+# Login to Supabase
+supabase login
+
+# Link your project
+supabase link --project-ref rzzxfufbiziokdhaokcn
+
+# Pull the schema
+supabase db pull
+```
 
 ## Step 4: Modify Schema for Self-Hosted Setup
 
