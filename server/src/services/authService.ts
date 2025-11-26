@@ -3,7 +3,12 @@ import jwt from 'jsonwebtoken';
 import { query } from '../config/database';
 import { z } from 'zod';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+// Validate JWT_SECRET exists at runtime
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
+
+const JWT_SECRET: string = process.env.JWT_SECRET;
 const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || '15m';
 const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || '7d';
 
