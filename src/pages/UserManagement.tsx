@@ -154,28 +154,10 @@ const UserManagement = () => {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('You must be logged in to delete users');
-      }
+      const result = await apiClient.deleteUser(userId);
 
-      const response = await fetch(
-        `https://rzzxfufbiziokdhaokcn.supabase.co/functions/v1/delete-user`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ userId }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete user');
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       setProfiles(prev => prev.filter(p => p.id !== userId));

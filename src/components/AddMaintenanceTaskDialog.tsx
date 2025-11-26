@@ -63,11 +63,7 @@ export const AddMaintenanceTaskDialog = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { error } = await supabase.from("maintenance_tasks").insert({
-        user_id: user.id,
+      const result = await apiClient.createMaintenanceTask({
         name: data.name,
         description: data.description || null,
         frequency: data.frequency,
@@ -77,7 +73,7 @@ export const AddMaintenanceTaskDialog = () => {
         is_active: true,
       });
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
       toast({
         title: "Success",
