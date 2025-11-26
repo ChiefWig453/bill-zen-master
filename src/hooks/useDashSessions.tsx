@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/apiClient';
 import { useAuth } from './useAuth';
 import { DashSession } from '@/types/dash';
 import { useToast } from './use-toast';
@@ -14,17 +14,15 @@ export const useDashSessions = () => {
   const fetchSessions = async () => {
     if (!user) return;
     
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('dash_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('start_time', { ascending: false });
-
-      if (error) throw error;
+      const result = await apiClient.getDashSessions();
       
-      setSessions(data || []);
-      setActiveSessions((data || []).filter(session => !session.end_time));
+      if (result.error) throw new Error(result.error);
+      
+      const data = (result.data as DashSession[]) || [];
+      setSessions(data);
+      setActiveSessions(data.filter(session => !session.end_time));
     } catch (error) {
       console.error('Error fetching dash sessions:', error);
       toast({
@@ -41,30 +39,28 @@ export const useDashSessions = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('dash_sessions')
-        .insert({
-          user_id: user.id,
-          start_time: new Date().toISOString(),
-          total_earnings: 0,
-          total_deliveries: 0,
-          tips_cash: 0,
-          tips_app: 0,
-          base_pay: 0,
-          promotions: 0
-        })
-        .select()
-        .single();
+      const result = await apiClient.createDashSession({
+        start_time: new Date().toISOString(),
+        total_earnings: 0,
+        total_deliveries: 0,
+        tips_cash: 0,
+        tips_app: 0,
+        base_pay: 0,
+        promotions: 0
+      });
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
-      setSessions(prev => [data, ...prev]);
-      setActiveSessions(prev => [...prev, data]);
+      const newSession = result.data as DashSession;
+      setSessions(prev => [newSession, ...prev]);
+      setActiveSessions(prev => [...prev, newSession]);
       
       toast({
         title: "Session Started",
         description: "Your DoorDash session has begun!"
       });
+      
+      return newSession;
     } catch (error) {
       console.error('Error starting session:', error);
       toast({
@@ -79,23 +75,19 @@ export const useDashSessions = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('dash_sessions')
-        .insert({
-          ...sessionData,
-          user_id: user.id
-        })
-        .select()
-        .single();
+      const result = await apiClient.createDashSession(sessionData);
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
-      setSessions(prev => [data, ...prev]);
+      const newSession = result.data as DashSession;
+      setSessions(prev => [newSession, ...prev]);
       
       toast({
         title: "Session Added",
         description: "Your past session has been recorded!"
       });
+      
+      return newSession;
     } catch (error) {
       console.error('Error creating session:', error);
       toast({
@@ -108,22 +100,22 @@ export const useDashSessions = () => {
 
   const endSession = async (sessionId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('dash_sessions')
-        .update({ end_time: new Date().toISOString() })
-        .eq('id', sessionId)
-        .select()
-        .single();
+      const result = await apiClient.updateDashSession(sessionId, {
+        end_time: new Date().toISOString()
+      });
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
-      setSessions(prev => prev.map(s => s.id === sessionId ? data : s));
+      const updatedSession = result.data as DashSession;
+      setSessions(prev => prev.map(s => s.id === sessionId ? updatedSession : s));
       setActiveSessions(prev => prev.filter(s => s.id !== sessionId));
       
       toast({
         title: "Session Ended",
         description: "Your DoorDash session has been completed!"
       });
+      
+      return updatedSession;
     } catch (error) {
       console.error('Error ending session:', error);
       toast({
@@ -136,22 +128,20 @@ export const useDashSessions = () => {
 
   const updateSession = async (sessionId: string, updates: Partial<DashSession>) => {
     try {
-      const { data, error } = await supabase
-        .from('dash_sessions')
-        .update(updates)
-        .eq('id', sessionId)
-        .select()
-        .single();
+      const result = await apiClient.updateDashSession(sessionId, updates);
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
-      setSessions(prev => prev.map(s => s.id === sessionId ? data : s));
-      setActiveSessions(prev => prev.map(s => s.id === sessionId ? data : s));
+      const updatedSession = result.data as DashSession;
+      setSessions(prev => prev.map(s => s.id === sessionId ? updatedSession : s));
+      setActiveSessions(prev => prev.map(s => s.id === sessionId ? updatedSession : s));
       
       toast({
         title: "Session Updated",
         description: "Session details have been saved"
       });
+      
+      return updatedSession;
     } catch (error) {
       console.error('Error updating session:', error);
       toast({
@@ -164,12 +154,9 @@ export const useDashSessions = () => {
 
   const deleteSession = async (sessionId: string) => {
     try {
-      const { error } = await supabase
-        .from('dash_sessions')
-        .delete()
-        .eq('id', sessionId);
+      const result = await apiClient.deleteDashSession(sessionId);
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
       setSessions(prev => prev.filter(s => s.id !== sessionId));
       setActiveSessions(prev => prev.filter(s => s.id !== sessionId));
@@ -189,7 +176,13 @@ export const useDashSessions = () => {
   };
 
   useEffect(() => {
-    fetchSessions();
+    if (user) {
+      fetchSessions();
+      
+      // Poll for updates every 30 seconds
+      const interval = setInterval(fetchSessions, 30000);
+      return () => clearInterval(interval);
+    }
   }, [user]);
 
   return {

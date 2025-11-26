@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/apiClient';
 import { useAuth } from './useAuth';
 import { DashExpense } from '@/types/dash';
 import { useToast } from './use-toast';
@@ -13,16 +13,13 @@ export const useDashExpenses = () => {
   const fetchExpenses = async () => {
     if (!user) return;
     
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('dash_expenses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
+      const result = await apiClient.getDashExpenses();
       
-      setExpenses(data || []);
+      if (result.error) throw new Error(result.error);
+      
+      setExpenses((result.data as DashExpense[]) || []);
     } catch (error) {
       console.error('Error fetching dash expenses:', error);
       toast({
@@ -39,25 +36,19 @@ export const useDashExpenses = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('dash_expenses')
-        .insert({
-          ...expense,
-          user_id: user.id
-        })
-        .select()
-        .single();
+      const result = await apiClient.createDashExpense(expense);
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
-      setExpenses(prev => [data, ...prev]);
+      const newExpense = result.data as DashExpense;
+      setExpenses(prev => [newExpense, ...prev]);
       
       toast({
         title: "Expense Added",
         description: "Your expense has been recorded"
       });
 
-      return data;
+      return newExpense;
     } catch (error) {
       console.error('Error creating expense:', error);
       toast({
@@ -70,21 +61,19 @@ export const useDashExpenses = () => {
 
   const updateExpense = async (expenseId: string, updates: Partial<DashExpense>) => {
     try {
-      const { data, error } = await supabase
-        .from('dash_expenses')
-        .update(updates)
-        .eq('id', expenseId)
-        .select()
-        .single();
+      const result = await apiClient.updateDashExpense(expenseId, updates);
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
-      setExpenses(prev => prev.map(e => e.id === expenseId ? data : e));
+      const updatedExpense = result.data as DashExpense;
+      setExpenses(prev => prev.map(e => e.id === expenseId ? updatedExpense : e));
       
       toast({
         title: "Expense Updated",
         description: "Expense details have been saved"
       });
+      
+      return updatedExpense;
     } catch (error) {
       console.error('Error updating expense:', error);
       toast({
@@ -97,12 +86,9 @@ export const useDashExpenses = () => {
 
   const deleteExpense = async (expenseId: string) => {
     try {
-      const { error } = await supabase
-        .from('dash_expenses')
-        .delete()
-        .eq('id', expenseId);
+      const result = await apiClient.deleteDashExpense(expenseId);
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
       setExpenses(prev => prev.filter(e => e.id !== expenseId));
       
@@ -121,7 +107,13 @@ export const useDashExpenses = () => {
   };
 
   useEffect(() => {
-    fetchExpenses();
+    if (user) {
+      fetchExpenses();
+      
+      // Poll for updates every 30 seconds
+      const interval = setInterval(fetchExpenses, 30000);
+      return () => clearInterval(interval);
+    }
   }, [user]);
 
   return {
