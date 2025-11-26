@@ -99,28 +99,17 @@ const Settings = () => {
 
     setIsUpdatingPassword(true);
     try {
-      // Verify current password
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: data.current_password,
-      });
+      const result = await apiClient.updatePassword(data.current_password, data.new_password);
 
-      if (signInError) {
+      if (result.error) {
         toast({
           title: "Error",
-          description: "Current password is incorrect",
+          description: result.error,
           variant: "destructive",
         });
         setIsUpdatingPassword(false);
         return;
       }
-
-      // Update to new password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: data.new_password,
-      });
-
-      if (updateError) throw updateError;
 
       toast({
         title: "Success",

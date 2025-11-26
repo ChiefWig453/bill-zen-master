@@ -57,11 +57,16 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      });
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      
+      if (!token) {
+        throw new Error('Reset token is missing');
+      }
 
-      if (error) throw error;
+      const result = await apiClient.resetPassword(token, password);
+
+      if (result.error) throw new Error(result.error);
 
       toast({
         title: "Password updated",

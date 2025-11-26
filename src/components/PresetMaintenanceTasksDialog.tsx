@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Library, Plus } from "lucide-react";
 import { presetMaintenanceTasks, PresetMaintenanceTask } from "@/data/presetMaintenanceTasks";
 import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from '@/lib/apiClient';
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
