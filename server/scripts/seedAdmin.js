@@ -33,13 +33,12 @@ async function seedAdmin() {
       );
     }
 
-    const hashedPassword = await bcrypt.hash('password123', 10);
-
     // Clean up any existing related records for this user id
     await pool.query('DELETE FROM user_passwords WHERE user_id = $1', [v_user_id]);
-    await pool.query('DELETE FROM profiles WHERE id = $1', [v_user_id]);
     await pool.query('DELETE FROM user_roles WHERE user_id = $1', [v_user_id]);
     await pool.query('DELETE FROM user_preferences WHERE user_id = $1', [v_user_id]);
+
+    const hashedPassword = await bcrypt.hash('password123', 10);
 
     // Insert password hash
     await pool.query(
@@ -47,11 +46,7 @@ async function seedAdmin() {
       [v_user_id, hashedPassword]
     );
 
-    // Insert profile
-    await pool.query(
-      'INSERT INTO profiles (id, email, first_name, last_name, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())',
-      [v_user_id, email, 'Anthony', 'Rodriguez']
-    );
+    // NOTE: Skipping profiles insert to avoid RLS issues; profile is optional for login.
 
     // Insert admin role
     await pool.query(
