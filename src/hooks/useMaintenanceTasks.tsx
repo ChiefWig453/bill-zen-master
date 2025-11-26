@@ -1,91 +1,42 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from '@/lib/apiClient';
 import { MaintenanceTask, MaintenanceHistory } from "@/types/maintenance";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useMaintenanceTasks = (frequency?: 'weekly' | 'monthly' | 'seasonal') => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: tasks, isLoading, error } = useQuery({
     queryKey: ['maintenance-tasks', frequency],
     queryFn: async () => {
-      let query = supabase
-        .from('maintenance_tasks')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-
-      if (frequency) {
-        query = query.eq('frequency', frequency);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as MaintenanceTask[];
+      const result = await apiClient.getMaintenanceTasks(frequency);
+      if (result.error) throw new Error(result.error);
+      return (result.data as MaintenanceTask[]) || [];
     },
+    enabled: !!user,
+    refetchInterval: 30000, // Poll every 30 seconds
   });
-
-  // Set up realtime subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel('maintenance-tasks-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'maintenance_tasks'
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['maintenance-tasks'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
 
   const completeTaskMutation = useMutation({
     mutationFn: async ({ taskId, notes }: { taskId: string; notes?: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      // Get the task first
-      const { data: task, error: taskError } = await supabase
-        .from('maintenance_tasks')
-        .select('*')
-        .eq('id', taskId)
-        .single();
-
-      if (taskError) throw taskError;
-
       // Create history record
-      const { error: historyError } = await supabase
-        .from('maintenance_history')
-        .insert({
-          task_id: taskId,
-          user_id: user.id,
-          notes: notes || null,
-        });
-
-      if (historyError) throw historyError;
+      const historyResult = await apiClient.createMaintenanceHistory({
+        task_id: taskId,
+        notes: notes || null,
+        completed_at: new Date().toISOString(),
+      });
+      if (historyResult.error) throw new Error(historyResult.error);
 
       // Update task with completion time
-      const { error: updateError } = await supabase
-        .from('maintenance_tasks')
-        .update({
-          last_completed_at: new Date().toISOString(),
-        })
-        .eq('id', taskId);
+      const taskResult = await apiClient.updateMaintenanceTask(taskId, {
+        last_completed_at: new Date().toISOString(),
+      });
+      if (taskResult.error) throw new Error(taskResult.error);
 
-      if (updateError) throw updateError;
-
-      return task;
+      return taskResult.data as MaintenanceTask;
     },
     onSuccess: (task) => {
       queryClient.invalidateQueries({ queryKey: ['maintenance-tasks'] });
@@ -107,12 +58,9 @@ export const useMaintenanceTasks = (frequency?: 'weekly' | 'monthly' | 'seasonal
 
   const toggleTaskMutation = useMutation({
     mutationFn: async ({ taskId, isActive }: { taskId: string; isActive: boolean }) => {
-      const { error } = await supabase
-        .from('maintenance_tasks')
-        .update({ is_active: isActive })
-        .eq('id', taskId);
-
-      if (error) throw error;
+      const result = await apiClient.updateMaintenanceTask(taskId, { is_active: isActive });
+      if (result.error) throw new Error(result.error);
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['maintenance-tasks'] });
@@ -138,23 +86,17 @@ export const useMaintenanceTasks = (frequency?: 'weekly' | 'monthly' | 'seasonal
 };
 
 export const useMaintenanceHistory = (taskId?: string) => {
+  const { user } = useAuth();
+
   const { data: history, isLoading } = useQuery({
     queryKey: ['maintenance-history', taskId],
     queryFn: async () => {
-      let query = supabase
-        .from('maintenance_history')
-        .select('*')
-        .order('completed_at', { ascending: false });
-
-      if (taskId) {
-        query = query.eq('task_id', taskId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as MaintenanceHistory[];
+      const result = await apiClient.getMaintenanceHistory(taskId);
+      if (result.error) throw new Error(result.error);
+      return (result.data as MaintenanceHistory[]) || [];
     },
+    enabled: !!user,
+    refetchInterval: 30000, // Poll every 30 seconds
   });
 
   return {

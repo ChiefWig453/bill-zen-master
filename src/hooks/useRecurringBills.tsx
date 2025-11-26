@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,7 +19,6 @@ export const useRecurringBills = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Fetch recurring bills from database
   const fetchRecurringBills = async () => {
     if (!user) {
       setRecurringBills([]);
@@ -28,22 +27,10 @@ export const useRecurringBills = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('bill_templates')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching recurring bills:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load recurring bills",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setRecurringBills(data || []);
+      const result = await apiClient.getBillTemplates();
+      
+      if (result.error) throw new Error(result.error);
+      setRecurringBills((result.data as RecurringBill[]) || []);
     } catch (error) {
       console.error('Error fetching recurring bills:', error);
       toast({
@@ -56,12 +43,16 @@ export const useRecurringBills = () => {
     }
   };
 
-  // Load recurring bills when user changes
   useEffect(() => {
-    fetchRecurringBills();
+    if (user) {
+      fetchRecurringBills();
+      
+      // Poll for updates every 30 seconds
+      const interval = setInterval(fetchRecurringBills, 30000);
+      return () => clearInterval(interval);
+    }
   }, [user]);
 
-  // Migrate existing localStorage templates to database (one-time migration)
   const migrateFromLocalStorage = async () => {
     if (!user) return;
 
@@ -72,25 +63,15 @@ export const useRecurringBills = () => {
       const localTemplates = JSON.parse(savedTemplates);
       if (localTemplates.length === 0) return;
 
-      // Insert templates into database
-      const templatesToInsert = localTemplates.map((template: any) => ({
-        user_id: user.id,
-        name: template.name,
-        amount: template.amount,
-        category: template.category,
-        due_day: template.due_day,
-      }));
-
-      const { error } = await supabase
-        .from('bill_templates')
-        .insert(templatesToInsert);
-
-      if (error) {
-        console.error('Error migrating recurring bills:', error);
-        return;
+      for (const template of localTemplates) {
+        await apiClient.createBillTemplate({
+          name: template.name,
+          amount: template.amount,
+          category: template.category,
+          due_day: template.due_day,
+        });
       }
 
-      // Clear localStorage after successful migration
       localStorage.removeItem('billTemplates');
       
       toast({
@@ -98,14 +79,12 @@ export const useRecurringBills = () => {
         description: `${localTemplates.length} recurring bills have been migrated to secure storage.`,
       });
 
-      // Refresh recurring bills
       fetchRecurringBills();
     } catch (error) {
       console.error('Error during migration:', error);
     }
   };
 
-  // Perform migration on first load
   useEffect(() => {
     if (user && !isLoading) {
       migrateFromLocalStorage();
@@ -137,39 +116,26 @@ export const useRecurringBills = () => {
     }
 
     try {
-      // Validate input
       validateInput(recurringBillData.name, recurringBillData.amount, recurringBillData.category);
 
-      const { data, error } = await supabase
-        .from('bill_templates')
-        .insert([{
-          user_id: user.id,
-          name: recurringBillData.name.trim(),
-          amount: recurringBillData.amount,
-          category: recurringBillData.category.trim(),
-          due_day: recurringBillData.due_day,
-        }])
-        .select()
-        .single();
+      const result = await apiClient.createBillTemplate({
+        name: recurringBillData.name.trim(),
+        amount: recurringBillData.amount,
+        category: recurringBillData.category.trim(),
+        due_day: recurringBillData.due_day,
+      });
 
-      if (error) {
-        console.error('Error adding recurring bill:', error);
-        toast({
-          title: "Error",
-          description: "Failed to add recurring bill",
-          variant: "destructive",
-        });
-        return null;
-      }
+      if (result.error) throw new Error(result.error);
 
-      setRecurringBills(prev => [data, ...prev]);
+      const newBill = result.data as RecurringBill;
+      setRecurringBills(prev => [newBill, ...prev]);
       
       toast({
         title: "Recurring bill added",
-        description: `${data.name} has been created.`,
+        description: `${newBill.name} has been created.`,
       });
       
-      return data;
+      return newBill;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to add recurring bill';
       toast({
@@ -192,7 +158,6 @@ export const useRecurringBills = () => {
     }
 
     try {
-      // Validate input if being updated
       if (updates.name !== undefined || updates.amount !== undefined || updates.category !== undefined) {
         const currentRecurringBill = recurringBills.find(t => t.id === id);
         validateInput(
@@ -209,23 +174,13 @@ export const useRecurringBills = () => {
         ...(updates.due_day !== undefined && { due_day: updates.due_day }),
       };
 
-      const { error } = await supabase
-        .from('bill_templates')
-        .update(cleanUpdates)
-        .eq('id', id);
+      const result = await apiClient.updateBillTemplate(id, cleanUpdates);
 
-      if (error) {
-        console.error('Error updating recurring bill:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update recurring bill",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (result.error) throw new Error(result.error);
 
+      const updatedBill = result.data as RecurringBill;
       setRecurringBills(prev => prev.map(recurringBill => 
-        recurringBill.id === id ? { ...recurringBill, ...cleanUpdates } : recurringBill
+        recurringBill.id === id ? updatedBill : recurringBill
       ));
       
       toast({
@@ -255,20 +210,9 @@ export const useRecurringBills = () => {
     const recurringBillToDelete = recurringBills.find(recurringBill => recurringBill.id === id);
     
     try {
-      const { error } = await supabase
-        .from('bill_templates')
-        .delete()
-        .eq('id', id);
+      const result = await apiClient.deleteBillTemplate(id);
 
-      if (error) {
-        console.error('Error deleting recurring bill:', error);
-        toast({
-          title: "Error",
-          description: "Failed to delete recurring bill",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (result.error) throw new Error(result.error);
 
       setRecurringBills(prev => prev.filter(recurringBill => recurringBill.id !== id));
       

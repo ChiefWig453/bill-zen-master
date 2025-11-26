@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Income } from '@/types/income';
@@ -13,16 +13,12 @@ export const useIncomes = () => {
   const fetchIncomes = async () => {
     if (!user) return;
     
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('incomes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('next_date', { ascending: true, nullsFirst: false })
-        .order('date_received', { ascending: false, nullsFirst: false });
-
-      if (error) throw error;
-      setIncomes((data as Income[]) || []);
+      const result = await apiClient.getIncomes();
+      
+      if (result.error) throw new Error(result.error);
+      setIncomes((result.data as Income[]) || []);
     } catch (error: any) {
       console.error('Error fetching incomes:', error);
       toast({
@@ -39,21 +35,18 @@ export const useIncomes = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('incomes')
-        .insert([{ ...incomeData, user_id: user.id }])
-        .select()
-        .single();
-
-      if (error) throw error;
+      const result = await apiClient.createIncome(incomeData);
       
-      setIncomes(prev => [...prev, data as Income]);
+      if (result.error) throw new Error(result.error);
+      
+      const newIncome = result.data as Income;
+      setIncomes(prev => [...prev, newIncome]);
       toast({
         title: "Income added",
         description: "Your income has been successfully added.",
       });
       
-      return data;
+      return newIncome;
     } catch (error: any) {
       console.error('Error adding income:', error);
       toast({
@@ -67,18 +60,13 @@ export const useIncomes = () => {
 
   const updateIncome = async (id: string, updates: Partial<Income>) => {
     try {
-      const { data, error } = await supabase
-        .from('incomes')
-        .update(updates)
-        .eq('id', id)
-        .eq('user_id', user?.id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const result = await apiClient.updateIncome(id, updates);
       
-      setIncomes(prev => prev.map(income => income.id === id ? { ...income, ...(data as Income) } : income));
-      return data;
+      if (result.error) throw new Error(result.error);
+      
+      const updatedIncome = result.data as Income;
+      setIncomes(prev => prev.map(income => income.id === id ? updatedIncome : income));
+      return updatedIncome;
     } catch (error: any) {
       console.error('Error updating income:', error);
       toast({
@@ -92,13 +80,9 @@ export const useIncomes = () => {
 
   const deleteIncome = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('incomes')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
+      const result = await apiClient.deleteIncome(id);
+      
+      if (result.error) throw new Error(result.error);
       
       setIncomes(prev => prev.filter(income => income.id !== id));
       toast({
@@ -133,32 +117,11 @@ export const useIncomes = () => {
   useEffect(() => {
     if (user) {
       fetchIncomes();
+      
+      // Poll for updates every 30 seconds
+      const interval = setInterval(fetchIncomes, 30000);
+      return () => clearInterval(interval);
     }
-  }, [user]);
-
-  // Set up realtime subscription
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel('incomes-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'incomes',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          fetchIncomes();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [user]);
 
   return {
