@@ -159,10 +159,15 @@ class ApiClient {
 
   async logout(): Promise<void> {
     if (this.refreshToken) {
-      await this.request('/auth/logout', {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken: this.refreshToken }),
-      });
+      try {
+        console.log('Attempting logout with endpoint:', `${API_BASE_URL}/auth/logout`);
+        await this.request('/auth/logout', {
+          method: 'POST',
+          body: JSON.stringify({ refreshToken: this.refreshToken }),
+        });
+      } catch (error) {
+        console.error('Logout request failed:', error);
+      }
     }
     this.clearTokens();
   }
