@@ -33,7 +33,7 @@ export const NotificationBanner = ({ bills }: NotificationBannerProps) => {
       type: 'danger' as const,
       title: `${overdueBills.length} overdue ${overdueBills.length === 1 ? 'bill' : 'bills'}`,
       description: overdueBills.map(bill => 
-        `${bill.name} ($${bill.amount.toFixed(2)}) was due ${format(new Date(bill.dueDate), 'MMM dd')}`
+        `${bill.name} ($${Number(bill.amount).toFixed(2)}) was due ${format(new Date(bill.dueDate), 'MMM dd')}`
       ).join(', ')
     });
   }
@@ -44,7 +44,7 @@ export const NotificationBanner = ({ bills }: NotificationBannerProps) => {
       type: 'warning' as const,
       title: `${dueSoonBills.length} ${dueSoonBills.length === 1 ? 'bill' : 'bills'} due within 3 days`,
       description: dueSoonBills.map(bill => 
-        `${bill.name} ($${bill.amount.toFixed(2)}) due ${format(new Date(bill.dueDate), 'MMM dd')}`
+        `${bill.name} ($${Number(bill.amount).toFixed(2)}) due ${format(new Date(bill.dueDate), 'MMM dd')}`
       ).join(', ')
     });
   }

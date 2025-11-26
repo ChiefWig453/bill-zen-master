@@ -107,7 +107,7 @@ export const BillCard = ({ bill, onTogglePaid, onEdit, onDelete, onDuplicate }: 
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="text-2xl font-bold">${bill.amount.toFixed(2)}</span>
+            <span className="text-2xl font-bold">${Number(bill.amount).toFixed(2)}</span>
           </div>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Due</p>

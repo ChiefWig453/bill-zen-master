@@ -147,7 +147,7 @@ export const MonthlyBillsChecklist = ({ recurringBills, bills, onBillUpdated }: 
                         </p>
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">
                           {recurringBill.category}
-                          {recurringBill.amount && ` • $${recurringBill.amount.toFixed(2)}`}
+                          {recurringBill.amount != null && !Number.isNaN(Number(recurringBill.amount)) && ` • $${Number(recurringBill.amount).toFixed(2)}`}
                           {recurringBill.due_day && ` • ${recurringBill.due_day}${getDaySuffix(recurringBill.due_day)}`}
                         </p>
                       </div>

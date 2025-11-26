@@ -112,9 +112,9 @@ export const RecurringBillsTab = ({ onCreateBillFromRecurringBill, recurringBill
                           </Badge>
                         </TableCell>
                         <TableCell className="py-4 text-right font-mono">
-                          {recurringBill.amount ? (
+                          {recurringBill.amount != null && !Number.isNaN(Number(recurringBill.amount)) ? (
                             <span className="text-green-600 dark:text-green-400 font-semibold">
-                              ${recurringBill.amount.toFixed(2)}
+                              ${Number(recurringBill.amount).toFixed(2)}
                             </span>
                           ) : (
                             <span className="text-muted-foreground text-sm">Not set</span>
@@ -202,9 +202,9 @@ export const RecurringBillsTab = ({ onCreateBillFromRecurringBill, recurringBill
                         
                         <div className="pt-2 border-t">
                           <p className="text-xs text-muted-foreground mb-1">Amount</p>
-                          {recurringBill.amount ? (
+                          {recurringBill.amount != null && !Number.isNaN(Number(recurringBill.amount)) ? (
                             <span className="text-green-600 dark:text-green-400 font-semibold text-lg">
-                              ${recurringBill.amount.toFixed(2)}
+                              ${Number(recurringBill.amount).toFixed(2)}
                             </span>
                           ) : (
                             <span className="text-muted-foreground text-sm">Not set</span>

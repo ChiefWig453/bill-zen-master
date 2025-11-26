@@ -38,7 +38,7 @@ export const DashboardStats = ({ bills, incomes }: DashboardStatsProps) => {
   const stats = [
     {
       title: 'Total Due This Month',
-      value: `$${totalDueAmount.toFixed(2)}`,
+      value: `$${Number(totalDueAmount).toFixed(2)}`,
       icon: DollarSign,
       description: `${billsDueThisMonth.filter(b => !b.is_paid).length} unpaid bills`,
       color: 'text-blue-600',
@@ -54,7 +54,7 @@ export const DashboardStats = ({ bills, incomes }: DashboardStatsProps) => {
     },
     {
       title: 'Paid This Month',
-      value: `$${totalPaidAmount.toFixed(2)}`,
+      value: `$${Number(totalPaidAmount).toFixed(2)}`,
       icon: CheckCircle,
       description: `${paidBillsThisMonth.length} bills paid`,
       color: 'text-green-600',
