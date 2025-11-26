@@ -337,14 +337,44 @@ const Index = () => {
   };
 
   // Show loading state
-  if (isLoading) {
+  if (isLoading || isLoadingIncomes || isLoadingRecurringBills) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <p>Loading your bills...</p>
-          </div>
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle>Loading...</CardTitle>
+              <CardDescription>
+                Please wait while we load your data
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Bills</span>
+                  <Badge variant={isLoading ? "secondary" : "outline"}>
+                    {isLoading ? "Loading..." : "Ready"}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Income</span>
+                  <Badge variant={isLoadingIncomes ? "secondary" : "outline"}>
+                    {isLoadingIncomes ? "Loading..." : "Ready"}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Templates</span>
+                  <Badge variant={isLoadingRecurringBills ? "secondary" : "outline"}>
+                    {isLoadingRecurringBills ? "Loading..." : "Ready"}
+                  </Badge>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                If this takes too long, check your backend connection at {import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
