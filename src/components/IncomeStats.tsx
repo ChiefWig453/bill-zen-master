@@ -14,23 +14,23 @@ export const IncomeStats = ({ incomes }: IncomeStatsProps) => {
   const stats = incomes.reduce((acc, income) => {
     const nextDate = income.next_date ? new Date(income.next_date) : null;
     
-    acc.totalExpected += income.amount;
+    acc.totalExpected += Number(income.amount);
     
     if (income.is_received) {
-      acc.received += income.amount;
+      acc.received += Number(income.amount);
       acc.receivedCount++;
     } else {
-      acc.pending += income.amount;
+      acc.pending += Number(income.amount);
       acc.pendingCount++;
       
       if (nextDate && isBefore(nextDate, thirtyDaysFromNow)) {
-        acc.expectedSoon += income.amount;
+        acc.expectedSoon += Number(income.amount);
         acc.expectedSoonCount++;
       }
     }
     
     if (income.is_recurring) {
-      acc.recurring += income.amount;
+      acc.recurring += Number(income.amount);
       acc.recurringCount++;
     }
     

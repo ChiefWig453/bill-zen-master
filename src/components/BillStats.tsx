@@ -16,20 +16,20 @@ export const BillStats = ({ bills, incomes = [] }: BillStatsProps) => {
   const stats = bills.reduce((acc, bill) => {
     const dueDate = new Date(bill.dueDate);
     
-    acc.total += bill.amount;
+    acc.total += Number(bill.amount);
     
     if (bill.isPaid) {
-      acc.paid += bill.amount;
+      acc.paid += Number(bill.amount);
       acc.paidCount++;
     } else {
-      acc.unpaid += bill.amount;
+      acc.unpaid += Number(bill.amount);
       acc.unpaidCount++;
       
       if (isBefore(dueDate, today)) {
-        acc.overdue += bill.amount;
+        acc.overdue += Number(bill.amount);
         acc.overdueCount++;
       } else if (isBefore(dueDate, threeDaysFromNow)) {
-        acc.dueSoon += bill.amount;
+        acc.dueSoon += Number(bill.amount);
         acc.dueSoonCount++;
       }
     }
@@ -49,13 +49,13 @@ export const BillStats = ({ bills, incomes = [] }: BillStatsProps) => {
 
   // Calculate income stats
   const incomeStats = incomes.reduce((acc, income) => {
-    acc.totalIncome += income.amount;
+    acc.totalIncome += Number(income.amount);
     
     if (income.is_received) {
-      acc.receivedIncome += income.amount;
+      acc.receivedIncome += Number(income.amount);
       acc.receivedCount++;
     } else {
-      acc.pendingIncome += income.amount;
+      acc.pendingIncome += Number(income.amount);
       acc.pendingCount++;
     }
     
