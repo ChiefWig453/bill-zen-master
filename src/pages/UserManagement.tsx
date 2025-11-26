@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { InviteUserDialog } from '@/components/InviteUserDialog';
 import { EditUserDialog } from '@/components/EditUserDialog';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/apiClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface Profile {
@@ -68,25 +68,11 @@ const UserManagement = () => {
 
   const fetchProfiles = async () => {
     try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const result = await apiClient.getUsers();
 
-      if (profilesError) throw profilesError;
+      if (result.error) throw new Error(result.error);
 
-      // Fetch roles for all users
-      const { data: rolesData } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
-
-      // Merge roles with profiles
-      const profilesWithRoles = (profilesData || []).map(profile => ({
-        ...profile,
-        role: rolesData?.find(r => r.user_id === profile.id)?.role || 'user'
-      }));
-
-      setProfiles(profilesWithRoles);
+      setProfiles((result.data as Profile[]) || []);
     } catch (error) {
       // Don't log sensitive error details to console in production
       toast({
@@ -101,29 +87,9 @@ const UserManagement = () => {
 
   const updateUserRole = async (userId: string, newRole: 'admin' | 'user') => {
     try {
-      // Check if role already exists
-      const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
+      const result = await apiClient.updateUser(userId, { role: newRole });
 
-      if (existingRole) {
-        // Update existing role
-        const { error } = await supabase
-          .from('user_roles')
-          .update({ role: newRole })
-          .eq('user_id', userId);
-
-        if (error) throw error;
-      } else {
-        // Insert new role
-        const { error } = await supabase
-          .from('user_roles')
-          .insert({ user_id: userId, role: newRole });
-
-        if (error) throw error;
-      }
+      if (result.error) throw new Error(result.error);
 
       setProfiles(prev => prev.map(p => 
         p.id === userId ? { ...p, role: newRole } : p
@@ -236,28 +202,12 @@ const UserManagement = () => {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('You must be logged in to delete users');
-      }
-
-      const response = await fetch(
-        `https://rzzxfufbiziokdhaokcn.supabase.co/functions/v1/delete-user`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ userIds: selectedUsers }),
+      // Delete users one by one using the backend API
+      for (const userId of selectedUsers) {
+        const result = await apiClient.deleteUser(userId);
+        if (result.error) {
+          throw new Error(result.error);
         }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete users');
       }
 
       setProfiles(prev => prev.filter(p => !selectedUsers.includes(p.id)));
@@ -265,7 +215,7 @@ const UserManagement = () => {
 
       toast({
         title: "Users deleted",
-        description: result.message || `${selectedUsers.length} user(s) have been deleted.`
+        description: `${selectedUsers.length} user(s) have been deleted.`
       });
     } catch (error: any) {
       toast({
