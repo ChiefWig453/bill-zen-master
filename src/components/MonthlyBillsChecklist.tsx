@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/hooks/useAuth';
 import { RecurringBill } from '@/hooks/useRecurringBills';
 import { Bill } from '@/hooks/useBills';
@@ -52,19 +52,16 @@ export const MonthlyBillsChecklist = ({ recurringBills, bills, onBillUpdated }: 
         const month = currentDate.getMonth();
         const dueDate = new Date(year, month, Math.min(dueDay, new Date(year, month + 1, 0).getDate()));
         
-        const { error } = await supabase
-          .from('bills')
-          .insert({
-            user_id: user.id,
-            name: recurringBill.name,
-            amount: recurringBill.amount || 0,
-            due_date: format(dueDate, 'yyyy-MM-dd'),
-            category: recurringBill.category,
-            is_paid: true,
-            is_archived: false,
-          });
+        const result = await apiClient.createBill({
+          name: recurringBill.name,
+          amount: recurringBill.amount || 0,
+          due_date: format(dueDate, 'yyyy-MM-dd'),
+          category: recurringBill.category,
+          is_paid: true,
+          is_archived: false,
+        });
 
-        if (error) throw error;
+        if (result.error) throw new Error(result.error);
 
         toast({
           title: "Bill marked as paid",
@@ -84,12 +81,9 @@ export const MonthlyBillsChecklist = ({ recurringBills, bills, onBillUpdated }: 
         });
 
         if (billToDelete) {
-          const { error } = await supabase
-            .from('bills')
-            .delete()
-            .eq('id', billToDelete.id);
+          const result = await apiClient.deleteBill(billToDelete.id);
 
-          if (error) throw error;
+          if (result.error) throw new Error(result.error);
 
           toast({
             title: "Bill unmarked",
