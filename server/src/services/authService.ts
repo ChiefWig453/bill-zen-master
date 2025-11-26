@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { type Secret, type SignOptions } from 'jsonwebtoken';
 import { query } from '../config/database';
 import { z } from 'zod';
 
@@ -181,16 +181,16 @@ export const authService = {
   generateAccessToken(userId: string, role: 'admin' | 'user'): string {
     return jwt.sign(
       { userId, role },
-      JWT_SECRET,
-      { expiresIn: JWT_ACCESS_EXPIRY }
+      JWT_SECRET as Secret,
+      { expiresIn: JWT_ACCESS_EXPIRY } as SignOptions
     );
   },
 
   generateRefreshToken(userId: string): string {
     return jwt.sign(
       { userId },
-      JWT_SECRET,
-      { expiresIn: JWT_REFRESH_EXPIRY }
+      JWT_SECRET as Secret,
+      { expiresIn: JWT_REFRESH_EXPIRY } as SignOptions
     );
   }
 };
